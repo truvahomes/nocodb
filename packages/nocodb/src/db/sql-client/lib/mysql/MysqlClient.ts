@@ -596,6 +596,7 @@ class MysqlClient extends KnexClient {
    * @returns {string} - columns[].tn,
    * @returns {string} - columns[].unique,
    * @returns {string} - columns[].un
+   * @returns {string} - columns[].meta
    */
   async columnList(args: any = {}) {
     const func = this.columnList.name;
@@ -630,6 +631,7 @@ class MysqlClient extends KnexClient {
             column.generated_expression = response[0][i].generated_expression;
           }
 
+          column.meta = {}
           column.tn = response[0][i].tn;
           column.cn = response[0][i].cn;
           column.cno = response[0][i].cn;
@@ -654,6 +656,10 @@ class MysqlClient extends KnexClient {
 
           response[0][i].cst = response[0][i].cst || ' ';
           column.unique = response[0][i].cst.indexOf('UNIQUE') !== -1;
+
+          if (column.pk && response[0][i].ext.includes('DEFAULT_GENERATED')) {
+            column.meta.ag = true
+          }
 
           if (column.dt === 'timestamp' || column.dt === 'datetime') {
             if (response[0][i].cdf && response[0][i].ext) {

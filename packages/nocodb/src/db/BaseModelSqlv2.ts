@@ -8376,7 +8376,10 @@ class BaseModelSqlv2 implements IBaseModelSqlV2 {
       if (res && res[0] && res[0].insertId) {
         return res[0].insertId;
       }
-      return res;
+      // For INSERT, UPDATE and SELECT queries,
+      // the second argument is undefined/null in case of MySQL.
+      // Filtering that out to avoid errors where this list is propagated.
+      return res.filter(item => item !== null && item !== undefined);
     } else {
       return await trx.raw(query);
     }

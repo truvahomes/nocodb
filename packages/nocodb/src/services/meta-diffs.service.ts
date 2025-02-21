@@ -257,7 +257,8 @@ export class MetaDiffsService {
           !!oldCol.rqd !== !!column.rqd ||
           !!oldCol.un !== !!column.un ||
           !!oldCol.ai !== !!column.ai ||
-          !!oldCol.unique !== !!column.unique
+          !!oldCol.unique !== !!column.unique ||
+          !!oldCol?.meta?.ag !== !!column?.meta?.ag
         ) {
           tableProp.detectedChanges.push({
             type: MetaDiffType.TABLE_COLUMN_PROPS_CHANGED,
@@ -838,6 +839,10 @@ export class MetaDiffsService {
                 rqd,
                 un,
                 unique,
+                meta: {
+                  ...change.column?.meta,
+                  ...colMeta?.meta,
+                },
               });
             }
             break;
