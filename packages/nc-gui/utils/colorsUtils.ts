@@ -2,6 +2,24 @@ import colors from 'windicss/colors'
 import { enumColors as enumColor } from 'nocodb-sdk'
 export { enumColors as enumColor } from 'nocodb-sdk'
 
+const truvaColors = {
+  primary:  '#FF6F38',
+  primarySelected: '#FFE2DA',
+  primarySelectedSidebar: '#FFE2DA',
+  brand: {
+    50: '#FFF3F0',
+    100: '#FFE2DA',
+    200: '#FFC5B5',
+    300: '#FFA890',
+    400: '#FF8B6B',
+    500: '#FF6F38',
+    600: '#E65A2D',
+    700: '#CC4522',
+    800: '#993016',
+    900: '#66180B',
+  },
+}
+
 export const theme = {
   light: ['#ffdce5', '#fee2d5', '#ffeab6', '#d1f7c4', '#ede2fe', '#eee', '#cfdffe', '#d0f1fd', '#c2f5e8', '#ffdaf6'],
   dark: [
@@ -21,9 +39,9 @@ export const theme = {
 export const themeColors = {
   'background': '#FFFFFF',
   'surface': '#FFFFFF',
-  'primary': '#4351e8',
-  'primary-selected': '#EBF0FF',
-  'primary-selected-sidebar': '#EBF0FF',
+  'primary': truvaColors.primary,
+  'primary-selected': truvaColors.primarySelected,
+  'primary-selected-sidebar': truvaColors.primarySelectedSidebar,
   'hover': '#E1E3E6',
   'scrollbar': '#d7d7d7',
   'scrollbar-hover': '#cbcbcb',
@@ -39,17 +57,17 @@ export const themeColors = {
 export const themeV2Colors = {
   /** Primary shades */
   'royal-blue': {
-    'DEFAULT': '#4351E8',
-    '50': '#E7E8FC',
-    '100': '#D4D8FA',
-    '200': '#B0B6F5',
-    '300': '#8C94F1',
-    '400': '#6773EC',
-    '500': '#4351E8',
-    '600': '#1A2BD8',
-    '700': '#1421A6',
-    '800': '#0E1774',
-    '900': '#080D42',
+    'DEFAULT': truvaColors.primary,
+    '50': truvaColors.brand[50],
+    '100': truvaColors.brand[100],
+    '200': truvaColors.brand[200],
+    '300': truvaColors.brand[300],
+    '400': truvaColors.brand[400],
+    '500': truvaColors.brand[500],
+    '600': truvaColors.brand[600],
+    '700': truvaColors.brand[700],
+    '800': truvaColors.brand[800],
+    '900': truvaColors.brand[900],
   },
 
   /** Accent shades */
@@ -62,16 +80,16 @@ export const themeV3Colors = {
     black: '#000000',
   },
   brand: {
-    50: '#EBF0FF',
-    100: '#D6E0FF',
-    200: '#ADC2FF',
-    300: '#85A3FF',
-    400: '#5C85FF',
-    500: '#3366FF',
-    600: '#2952CC',
-    700: '#1F3D99',
-    800: '#142966',
-    900: '#0A1433',
+    50: truvaColors.brand[50],
+    100: truvaColors.brand[100],
+    200: truvaColors.brand[200],
+    300: truvaColors.brand[300],
+    400: truvaColors.brand[400],
+    500: truvaColors.brand[500],
+    600: truvaColors.brand[600],
+    700: truvaColors.brand[700],
+    800: truvaColors.brand[800],
+    900: truvaColors.brand[900],
   },
   gray: {
     10: '#FCFCFC',

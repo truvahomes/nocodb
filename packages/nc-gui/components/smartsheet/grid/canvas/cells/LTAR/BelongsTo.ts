@@ -99,7 +99,7 @@ export const BelongsToCellRenderer: CellRenderer = {
         y: y + 8,
         icon: 'ncPlus',
         size: 14,
-        color: '#374151',
+        color: '#FF8B6B',
       })
 
       if (isBoxHovered({ x: x + width - 26, y: y + 8, width: 14, height: 14 }, mousePosition)) {

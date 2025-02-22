@@ -23,12 +23,12 @@ export const PercentCellRenderer: CellRenderer = {
       if (percent === 0) return
 
       roundedRect(ctx, x + padding, barY, barWidth, barHeight, barHeight / 2, {
-        backgroundColor: '#3366FF',
+        backgroundColor: '#FF8B6B',
       })
       return
     }
 
-    ctx.fillStyle = pv ? '#3366FF' : '#4a5268'
+    ctx.fillStyle = pv ? '#FF8B6B' : '#4a5268'
 
     renderSingleLineText(ctx, {
       x: x + width - padding,
@@ -37,7 +37,7 @@ export const PercentCellRenderer: CellRenderer = {
       textAlign: 'right',
       maxWidth: width - padding * 2,
       fontFamily: `${pv ? 600 : 500} 13px Manrope`,
-      fillStyle: pv ? '#3366FF' : '#4a5268',
+      fillStyle: pv ? '#FF8B6B' : '#4a5268',
       height,
     })
   },

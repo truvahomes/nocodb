@@ -76,7 +76,7 @@ export const FormulaCellRenderer: CellRenderer = {
       if (typeof urls === 'string') {
         const texts = getFormulaTextSegments(urls)
         ctx.font = `${pv ? 600 : 500} 13px Manrope`
-        ctx.fillStyle = pv ? '#3366FF' : textColor
+        ctx.fillStyle = pv ? '#FF8B6B' : textColor
         const boxes = renderFormulaURL(ctx, {
           texts,
           height,
@@ -114,7 +114,7 @@ export const FormulaCellRenderer: CellRenderer = {
       const texts = getFormulaTextSegments(urls)
       const ctx = defaultOffscreen2DContext
       ctx.font = `${pv ? 600 : 500} 13px Manrope`
-      ctx.fillStyle = pv ? '#3366FF' : textColor
+      ctx.fillStyle = pv ? '#FF8B6B' : textColor
       const boxes = renderFormulaURL(ctx, {
         texts,
         height,

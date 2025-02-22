@@ -42,7 +42,7 @@ export const DateTimeCellRenderer: CellRenderer = {
     const dateStr = dateTimeValue?.format(dateFormat) ?? ''
     const truncatedDate = truncateText(ctx, dateStr, dateWidth - padding * 2)
 
-    ctx.fillStyle = pv ? '#3366FF' : '#4a5268'
+    ctx.fillStyle = pv ? '#FF8B6B' : '#4a5268'
     ctx.fillText(truncatedDate, x + padding, textY)
 
     const timeStr = dateTimeValue?.format(is12hrFormat ? timeFormatsObj[timeFormat] : timeFormat) ?? ''

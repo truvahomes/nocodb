@@ -24,7 +24,7 @@ export const LinksCellRenderer: CellRenderer = {
         text,
         maxWidth: width - padding * 2 - 20,
         fontFamily: '500 13px Manrope',
-        fillStyle: 'rgb(67, 81, 232)',
+        fillStyle: '#FF8B6B',
         height,
       })
 
@@ -36,7 +36,7 @@ export const LinksCellRenderer: CellRenderer = {
         text,
         maxWidth: width - padding * 2 - 20,
         fontFamily: '500 13px Manrope',
-        fillStyle: 'rgb(67, 81, 232)',
+        fillStyle: '#FF8B6B',
         height,
         underline: isHoverOverText,
       })
@@ -47,7 +47,7 @@ export const LinksCellRenderer: CellRenderer = {
           x: x + width - 16 - padding,
           y: y + 7,
           size: 16,
-          color: '#374151',
+          color: '#FF8B6B',
         })
 
         if (isHoverOverText || isBoxHovered({ x: x + width - 16 - padding, y: y + 7, width: 16, height: 16 }, mousePosition)) {

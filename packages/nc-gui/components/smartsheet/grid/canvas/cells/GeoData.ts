@@ -40,7 +40,7 @@ export const GeoDataCellRenderer: CellRenderer = {
         color: '#6a7184',
       })
 
-      ctx.fillStyle = '#374151'
+      ctx.fillStyle = '#FF8B6B'
       ctx.font = '10px Manrope'
       ctx.textBaseline = 'middle'
       ctx.fillText('Set location', buttonX + 28, buttonY + (buttonHeight + 2) / 2)
@@ -54,7 +54,7 @@ export const GeoDataCellRenderer: CellRenderer = {
         text: displayText,
         maxWidth,
         lineHeight: 16,
-        fillStyle: pv ? '#3366FF' : '#4a5268',
+        fillStyle: pv ? '#FF8B6B' : '#4a5268',
       })
     }
   },

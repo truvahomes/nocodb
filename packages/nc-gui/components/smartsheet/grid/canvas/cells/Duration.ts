@@ -24,7 +24,7 @@ export const DurationCellRenderer: CellRenderer = {
         text,
         maxWidth: width - padding * 2,
         fontFamily: `${pv ? 600 : 500} 13px Manrope`,
-        fillStyle: pv ? '#3366FF' : textColor,
+        fillStyle: pv ? '#FF8B6B' : textColor,
         height,
       })
 

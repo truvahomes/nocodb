@@ -31,7 +31,7 @@ export const UrlCellRenderer: CellRenderer = {
         text,
         maxWidth,
         fontFamily: `${pv ? 600 : 500} 13px Manrope`,
-        fillStyle: (isValid && selected) || pv ? '#3366FF' : textColor,
+        fillStyle: (isValid && selected) || pv ? '#FF8B6B' : textColor,
         underline: isValid,
         height,
       })

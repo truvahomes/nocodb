@@ -24,7 +24,7 @@ export const EmailCellRenderer: CellRenderer = {
         text,
         maxWidth: width - padding * 2,
         fontFamily: `${pv ? 600 : 500} 13px Manrope`,
-        fillStyle: (isValidEmail && selected) || pv ? '#3366FF' : textColor,
+        fillStyle: (isValidEmail && selected) || pv ? '#FF8B6B' : textColor,
         underline: isValidEmail,
         height,
       })

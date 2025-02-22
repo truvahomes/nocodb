@@ -103,7 +103,7 @@ export const OneToOneCellRenderer: CellRenderer = {
         y: y + (hasValue ? 7 : 8),
         icon: hasValue ? 'maximize' : 'ncPlus',
         size: btnSize,
-        color: '#374151',
+        color: '#FF8B6B',
       })
 
       if (

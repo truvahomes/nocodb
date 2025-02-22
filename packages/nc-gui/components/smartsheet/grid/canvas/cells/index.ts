@@ -162,7 +162,7 @@ export function useGridCellHandler(params: {
     if (actionManager?.isLoading(pk, column.id) && !isAIPromptCol(column) && !isButton(column)) {
       const loadingStartTime = actionManager?.getLoadingStartTime(pk, column.id)
       if (loadingStartTime) {
-        renderSpinner(ctx, x + width / 2, y + 8, 16, '#3366FF', loadingStartTime, 1.5)
+        renderSpinner(ctx, x + width / 2, y + 8, 16, '#FF8B6B', loadingStartTime, 1.5)
         return
       }
     }
@@ -217,7 +217,7 @@ export function useGridCellHandler(params: {
         y,
         text: value?.toString() ?? '',
         fontFamily: `${pv ? 600 : 500} 13px Manrope`,
-        fillStyle: pv ? '#3366FF' : textColor,
+        fillStyle: pv ? '#FF8B6B' : textColor,
         height,
         py: padding,
         cellRenderStore,

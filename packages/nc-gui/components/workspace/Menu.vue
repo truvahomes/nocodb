@@ -17,7 +17,10 @@ const { appInfo } = useGlobal()
         >
           <NcTooltip :disabled="!appInfo?.version || isEeUI">
             <template #title>{{ appInfo?.version }}</template>
-            <img alt="NocoDB" src="~/assets/img/brand/nocodb.png" />
+            <div class="flex items-center gap-2">
+              <img alt="Truva" height="35" width="35" src="~/assets/img/brand/truva-logo-small.svg" />
+              <img alt="NocoDB" src="~/assets/img/brand/nocodb.png" />
+            </div>
           </NcTooltip>
         </a>
         <div class="flex flex-grow"></div>

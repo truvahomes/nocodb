@@ -416,7 +416,7 @@ export function useCanvasRender({
               vSelectedAllRecords.value,
               false,
               spriteLoader,
-              isCheckboxHovered ? '#3366FF' : '#D9D9D9',
+              isCheckboxHovered ? '#FF8B6B' : '#D9D9D9',
             )
           } else {
             ctx.fillText(truncatedText, x, y)
@@ -530,7 +530,7 @@ export function useCanvasRender({
     const isInFixedArea = activeState.x <= fixedWidth
 
     if (activeState.col.fixed || !isInFixedArea) {
-      ctx.strokeStyle = '#3366ff'
+      ctx.strokeStyle = '#FF6F38'
       ctx.lineWidth = 2
       roundedRect(ctx, activeState.x, activeState.y, activeState.width, activeState.height, 2)
       ctx.lineWidth = 1
@@ -549,7 +549,7 @@ export function useCanvasRender({
         width: activeState.width - (fixedWidth - activeState.x),
       }
 
-      ctx.strokeStyle = '#3366ff'
+      ctx.strokeStyle = '#FF8B6B'
       ctx.lineWidth = 2
       // add extra 1px offset to x, since there is an additional border separating fixed and non-fixed columns
       roundedRect(ctx, adjustedState.x + 1, adjustedState.y, adjustedState.width, adjustedState.height, 2)
@@ -600,7 +600,7 @@ export function useCanvasRender({
       const startY = -partialRowHeight.value + 33 + (selection.value.start.row - rowSlice.value.start) * rowHeight.value
 
       ctx.setLineDash([2, 2])
-      ctx.strokeStyle = isAiFillMode.value ? '#9751d7' : '#3366ff'
+      ctx.strokeStyle = isAiFillMode.value ? '#9751d7' : '#FF8B6B'
       ctx.strokeRect(
         calculateXPosition(selection.value.start.col) - scrollLeft.value,
         startY,
@@ -644,8 +644,8 @@ export function useCanvasRender({
     },
   ) => {
     const isHover = hoverRow.value === row.rowMeta.rowIndex
-    ctx.fillStyle = isHover ? '#F9F9FA' : '#ffffff'
-    if (row.rowMeta.selected) ctx.fillStyle = '#F6F7FE'
+    ctx.fillStyle = isHover ? '#FFF3F0' : '#ffffff'
+    if (row.rowMeta.selected) ctx.fillStyle = '#FFF3F0'
     ctx.fillRect(xOffset, yOffset, width, rowHeight.value)
 
     let currentX = xOffset + 4
@@ -663,7 +663,7 @@ export function useCanvasRender({
           isChecked,
           isDisabled,
           spriteLoader,
-          isCheckboxHovered ? '#3366FF' : '#D9D9D9',
+          isCheckboxHovered ? '#FF8B6B' : '#D9D9D9',
         )
         currentX += 30
         isCheckboxRendered = true
@@ -686,7 +686,7 @@ export function useCanvasRender({
           size: 16,
           x: currentX + 2,
           y: yOffset + (rowHeight.value - 16) / 2,
-          color: isHovered ? '#3265FF' : '#6B7280',
+          color: isHovered ? '#FF8B6B' : '#6B7280',
         })
         currentX += 24
       } else if (!isHover) {
@@ -713,7 +713,7 @@ export function useCanvasRender({
           isChecked,
           isDisabled,
           spriteLoader,
-          isCheckboxHovered ? '#3366FF' : '#D9D9D9',
+          isCheckboxHovered ? '#FF8B6B' : '#D9D9D9',
         )
         currentX += 24
       }
@@ -762,11 +762,11 @@ export function useCanvasRender({
 
       ctx.fillStyle = '#EEF2FF'
       ctx.fill()
-      ctx.strokeStyle = '#3366FF'
+      ctx.strokeStyle = '#FF8B6B'
       ctx.lineWidth = 1
       ctx.stroke()
 
-      ctx.fillStyle = '#3366FF'
+      ctx.fillStyle = '#FF8B6B'
       ctx.textAlign = 'center'
       ctx.textBaseline = 'middle'
       ctx.fillText(commentCount, x + bubbleWidth / 2, y + bubbleHeight / 2)
@@ -831,7 +831,7 @@ export function useCanvasRender({
           ctx.globalAlpha = 0.5
         }
 
-        ctx.fillStyle = hoverRow.value === rowIdx ? '#F9F9FA' : '#ffffff'
+        ctx.fillStyle = hoverRow.value === rowIdx ? '#FFF3F0' : '#ffffff'
         ctx.fillRect(0, yOffset, adjustedWidth, rowHeight.value)
         if (row) {
           const pk = extractPkFromRow(row.row, meta.value?.columns ?? [])
@@ -851,7 +851,7 @@ export function useCanvasRender({
             }
 
             if (row.rowMeta.selected || selection.value.isCellInRange({ row: rowIdx, col: absoluteColIdx })) {
-              ctx.fillStyle = '#F6F7FE'
+              ctx.fillStyle = '#FFF3F0'
               ctx.fillRect(xOffset - scrollLeft.value, yOffset, width, rowHeight.value)
             }
 
@@ -922,10 +922,10 @@ export function useCanvasRender({
               const isCellEditEnabled = editEnabled.value && activeCell.value.row === rowIdx && activeCell.value.column === colIdx
 
               if (row.rowMeta.selected || selection.value.isCellInRange({ row: rowIdx, col: colIdx })) {
-                ctx.fillStyle = '#F6F7FE'
+                ctx.fillStyle = '#FFF3F0'
                 ctx.fillRect(xOffset, yOffset, width, rowHeight.value)
               } else {
-                ctx.fillStyle = hoverRow.value === rowIdx ? '#F9F9FA' : '#ffffff'
+                ctx.fillStyle = hoverRow.value === rowIdx ? '#FFF3F0' : '#ffffff'
                 ctx.fillRect(xOffset, yOffset, width, rowHeight.value)
               }
 
@@ -1168,7 +1168,7 @@ export function useCanvasRender({
     if (warningRow) {
       const orange = '#fcbe3a'
       // Warning top border
-      ctx.strokeStyle = 'orange'
+      ctx.strokeStyle = orange
       ctx.beginPath()
       ctx.moveTo(0, warningRow.yOffset - 2)
       ctx.lineTo(adjustedWidth, warningRow.yOffset)
@@ -1206,10 +1206,12 @@ export function useCanvasRender({
 
       const isInFixedArea = xOffset - scrollLeft.value <= fixedWidth
 
-      ctx.strokeStyle = '#ff4a3f'
+      ctx.strokeStyle = 'rgb(255, 13, 0)'
       ctx.lineWidth = 2
       if (column.fixed || !isInFixedArea) {
-        roundedRect(ctx, column.fixed ? xOffset : xOffset - scrollLeft.value, yOffset, width, rowHeight.value, 2)
+        roundedRect(ctx, column.fixed ? xOffset : xOffset - scrollLeft.value, yOffset, width, rowHeight.value, 2, {
+          required: true,
+        })
       } else if (isInFixedArea) {
         if (xOffset + width <= fixedWidth) {
           continue
@@ -1245,7 +1247,7 @@ export function useCanvasRender({
     ctx.fillRect(xPosition - scrollLeft.value, 0, width, height.value)
     ctx.globalAlpha = 1
 
-    ctx.strokeStyle = '#3366ff'
+    ctx.strokeStyle = '#FF8B6B'
     ctx.lineWidth = 2
     ctx.beginPath()
     ctx.moveTo(xPosition - scrollLeft.value, 0)
@@ -1568,7 +1570,7 @@ export function useCanvasRender({
 
     const targetRowLine = (targetRowIndex.value - rowSlice.value.start) * rowHeight.value - partialRowHeight.value + 32
     // First render the blue line indicator
-    ctx.strokeStyle = '#3366ff'
+    ctx.strokeStyle = '#FF8B6B'
     ctx.lineWidth = 2
     ctx.beginPath()
     ctx.moveTo(0, targetRowLine)

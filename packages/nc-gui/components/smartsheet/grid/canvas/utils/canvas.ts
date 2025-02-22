@@ -140,7 +140,7 @@ export function roundedRect(
   width: number,
   height: number,
   radius: number | { topRight?: number; bottomRight?: number; bottomLeft?: number; topLeft?: number },
-  { backgroundColor, borderColor, borderWidth }: { backgroundColor?: string; borderColor?: string; borderWidth?: number } = {},
+  { backgroundColor, borderColor, borderWidth, required }: { backgroundColor?: string; borderColor?: string; borderWidth?: number; required?: boolean } = {},
 ): void {
   const {
     topLeft = 0,
@@ -180,6 +180,12 @@ export function roundedRect(
     ctx.fillStyle = backgroundColor
     ctx.fill()
   }
+
+  if (required) {
+    ctx.fillStyle = '#FF8B6B'
+    ctx.font = '12px Manrope'
+    ctx.fillText('(required)', x + width / 2, y + height / 2)
+  }
 }
 
 export const renderCheckbox = (
@@ -189,7 +195,7 @@ export const renderCheckbox = (
   isChecked: boolean,
   isDisabled: boolean,
   spriteLoader: SpriteLoader,
-  strokeColor = '#E5E7EB',
+  strokeColor = '#FF8B6B',
 ) => {
   const size = 16
   const radius = 4
@@ -215,7 +221,7 @@ export const renderCheckbox = (
     ctx.lineWidth = 1
     ctx.stroke()
   } else if (isChecked) {
-    ctx.fillStyle = '#4351e7'
+    ctx.fillStyle = '#FF8B6B'
     ctx.fill()
 
     const checkX = x + 3.5
@@ -543,8 +549,8 @@ export const renderMarkdownBlocks = (
           height: baseFontSize + 4,
         }
 
-        ctx.fillStyle = '#4351e7'
-        ctx.strokeStyle = '#4351e7'
+        ctx.fillStyle = '#FF8B6B'
+        ctx.strokeStyle = '#FF8B6B'
 
         const isHovered = isBoxHovered(linkBox, mousePosition)
 
@@ -784,7 +790,7 @@ export function renderBarcode(
     ctx.font = `500 13px Manrope`
     ctx.textBaseline = 'middle'
     ctx.textAlign = 'left'
-    ctx.fillStyle = '#4a5268'
+    ctx.fillStyle = '#FF8B6B'
 
     const { text, width: textWidth } = truncateText(ctx, value.toString(), width - padding * 2, true)
 
@@ -796,7 +802,7 @@ export function renderBarcode(
       height,
       fontSize: 13,
       fontFamily: '500 13px Manrope',
-      fillStyle: '#4a5268',
+      fillStyle: '#',
       textAlign: 'left',
     })
 
@@ -948,7 +954,7 @@ export const renderTagLabel = (
   ctx: CanvasRenderingContext2D,
   props: CellRendererOptions & { text: string; renderAsMarkdown?: boolean },
 ) => {
-  const { x, y, height, width, padding, textColor = '#4a5268', mousePosition, spriteLoader, text, renderAsMarkdown } = props
+  const { x, y, height, width, padding, textColor = '#FF8B6B', mousePosition, spriteLoader, text, renderAsMarkdown } = props
   const {
     tagPaddingX = 8,
     tagHeight = 20,
@@ -1133,7 +1139,7 @@ export function renderIconButton(
     borderColor,
   })
 
-  const { color = '#374151', xOffset = 4, yOffset = 4, size: iconSize = 16 } = iconData
+  const { color = '#FF8B6B', xOffset = 4, yOffset = 4, size: iconSize = 16 } = iconData
 
   spriteLoader.renderIcon(ctx, {
     icon,
