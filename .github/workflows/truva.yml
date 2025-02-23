@@ -3,21 +3,22 @@ name: "nocodb.truva.in"
 on:
   workflow_dispatch:
     inputs:
-      tag:
-        description: "Docker image tag"
-        required: true
-      operation:
-        description: "Choose operation: build, deploy, build-deploy"
+      action:
+        description: "Choose what to run"
         required: true
         type: choice
         options:
           - build
           - deploy
-          - build-deploy
+          - build+deploy
+        default: build+deploy
+      tag:
+        description: "Docker image tag"
+        required: true
 
 jobs:
   build-image:
-    if: inputs.operation == 'build' || inputs.operation == 'build-deploy'
+    if: inputs.action == 'build' || inputs.action == 'build+deploy'
     runs-on: ubuntu-22.04
     env:
       working-directory: ./packages/nocodb
@@ -58,8 +59,8 @@ jobs:
 
       - name: Update version in package.json
         run: |
-          cd packages/nocodb &&
-          jq --arg VERSION "$VERSION" '.version = $VERSION' package.json > tmp.json &&
+          cd packages/nocodb
+          jq --arg VERSION "$VERSION" '.version = $VERSION' package.json > tmp.json
           mv tmp.json package.json
         env:
           VERSION: ${{ inputs.tag }}
@@ -75,7 +76,7 @@ jobs:
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v1
 
-      - name: Build and push Docker image
+      - name: Build, tag, and push the image to Amazon ECR
         id: build-image
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
@@ -87,9 +88,9 @@ jobs:
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
 
   deploy-on-ecs:
-    if: inputs.operation == 'deploy' || inputs.operation == 'build-deploy'
-    needs: [build-image]
+    if: inputs.action == 'deploy' || inputs.action == 'build+deploy'
     runs-on: ubuntu-22.04
+    needs: [build-image]  # Runs after build if build+deploy is chosen
     steps:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
