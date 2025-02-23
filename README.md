@@ -1,6 +1,6 @@
 <h1 align="center" style="border-bottom: none">
     <div>
-        <a style="color:#36f" href="https://www.nocodb.com">
+        <a style="color:#36f" href="https://www.nocodb.truva.in">
             <img src="/packages/nc-gui/assets/img/brand/truva-logo-small.svg" width="100" />
             <br>
             <img src="/packages/nc-gui/assets/img/icons/512x512.png" width="80" />
