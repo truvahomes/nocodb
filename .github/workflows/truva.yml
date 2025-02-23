@@ -7,13 +7,6 @@ on:
       tag:
         description: "Docker image tag"
         required: true
-      targetEnv:
-        description: "Target Environment"
-        required: true
-        type: choice
-        options:
-          - DEV
-          - PROD
 
 jobs:
   buildx:
