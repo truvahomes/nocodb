@@ -1,4 +1,4 @@
-name: "Release : Docker for Truva"
+name: "nocodb.truva.in"
 
 on:
   # Manually triggered workflow
