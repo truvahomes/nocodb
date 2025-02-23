@@ -10,16 +10,16 @@ on:
       operation:
         description: "Choose operation: Build only, Deploy only, Both Build and Deploy"
         required: false
-        default: "Build and Deploy"
+        default: Build-Deploy
         type: choice
         options:
-          - "Build"
-          - "Deploy"
-          - "Build and Deploy"
+          - Build
+          - Deploy
+          - Build-Deploy
 
 jobs:
   build-image:
-    if: inputs.operation == 'Build' || inputs.operation == 'Build and Deploy'
+    if: inputs.operation == 'Build' || inputs.operation == 'Build-Deploy'
     runs-on: ubuntu-22.04
     env:
       working-directory: ./packages/nocodb
@@ -102,7 +102,7 @@ jobs:
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
 
   deploy-on-ecs:
-    if: inputs.operation == 'Deploy' || inputs.operation == 'Build and Deploy'
+    if: inputs.operation == 'Deploy' || inputs.operation == 'Build-Deploy'
     needs: build-image
     runs-on: ubuntu-22.04
     steps:
