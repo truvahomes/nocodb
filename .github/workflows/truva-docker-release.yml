@@ -1,7 +1,7 @@
 name: "Release : Docker for Truva"
 
 on:
-  # Triggered manually
+  # Manually triggered workflow
   workflow_dispatch:
     inputs:
       tag:
@@ -14,15 +14,6 @@ on:
         options:
           - DEV
           - PROD
-    secrets:
-      AWS_ACCESS_KEY_ID:
-        required: true
-      AWS_SECRET_ACCESS_KEY:
-        required: true
-      AWS_REGION:
-        required: true
-      REPO_NAME:
-        required: true
 
 jobs:
   buildx:
@@ -30,52 +21,50 @@ jobs:
     env:
       working-directory: ./packages/nocodb
     steps:
+      # Setup pnpm package manager
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
         with:
           version: 9
 
-      - name: Checkout
+      # Checkout repository
+      - name: Checkout repository
         uses: actions/checkout@v3
         with:
-          fetch-depth: 1
+          fetch-depth: 1 # Fetch only the latest commit for efficiency
           ref: ${{ github.ref }}
 
-      - name: Use Node.js ${{ matrix.node-version }}
+      # Setup Node.js with a specific version
+      - name: Use Node.js
         uses: actions/setup-node@v3
         with:
           node-version: 22.12.0
 
-      - name: install dependencies
+      # Install dependencies using pnpm
+      - name: Install dependencies
         run: pnpm bootstrap
 
-      - name: Build gui and sdk
+      # Build GUI and SDK
+      - name: Build GUI and SDK
         run: |
-
-          pnpm bootstrap &&
-          cd packages/nc-gui &&
+          pnpm bootstrap
+          cd packages/nc-gui
           pnpm run generate
           
-          # copy build to nocodb
+          # Ensure target directory exists before copying
+          mkdir -p ../nocodb/docker/nc-gui/
           rsync -rvzh ./dist/ ../nocodb/docker/nc-gui/
 
-      - name: build nocodb
+      # Build NocoDB, including packaging nocodb-sdk and nc-gui
+      - name: Build NocoDB
         run: |
-          # build nocodb ( pack nocodb-sdk and nc-gui )
-          cd packages/nocodb &&
-          EE=true pnpm exec rspack --config rspack.timely.config.js &&
-          # remove bundled libraries (nocodb-sdk, knex-snowflake)
+          cd packages/nocodb
+          EE=true pnpm exec rspack --config rspack.timely.config.js
+          
+          # Remove bundled libraries (nocodb-sdk, knex-snowflake) to avoid duplication
           pnpm uninstall --save-prod nocodb-sdk  
 
-      - name: Update version in package.json
-        run: |
-          # update package.json
-          cd packages/nocodb &&
-          jq --arg VERSION "$VERSION" '.version = $VERSION' package.json > tmp.json &&
-          mv tmp.json package.json
-        env:
-          VERSION: ${{ inputs.tag }}
-
+      # Configure AWS credentials (✅ FIXED: Secrets are now referenced correctly)
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
         with:
@@ -83,10 +72,12 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
 
+      # Login to Amazon ECR
       - name: Login to Amazon ECR
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v1
 
+      # Build and push Docker image to Amazon ECR
       - name: Build, tag, and push the image to Amazon ECR
         id: build-image
         env:
@@ -94,5 +85,6 @@ jobs:
           ECR_REPOSITORY: ${{ secrets.REPO_NAME }}
           IMAGE_TAG: ${{ inputs.tag }}
         run: |
+          cd packages/nocodb  # Ensure we're in the correct directory for Docker build
           docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
