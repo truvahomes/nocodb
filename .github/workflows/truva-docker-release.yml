@@ -1,0 +1,98 @@
+name: "Release : Docker for Truva"
+
+on:
+  # Triggered manually
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Docker image tag"
+        required: true
+      targetEnv:
+        description: "Target Environment"
+        required: true
+        type: choice
+        options:
+          - DEV
+          - PROD
+    secrets:
+      AWS_ACCESS_KEY_ID:
+        required: true
+      AWS_SECRET_ACCESS_KEY:
+        required: true
+      AWS_REGION:
+        required: true
+      REPO_NAME:
+        required: true
+
+jobs:
+  buildx:
+    runs-on: ubuntu-22.04
+    env:
+      working-directory: ./packages/nocodb
+    steps:
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 1
+          ref: ${{ github.ref }}
+
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v3
+        with:
+          node-version: 22.12.0
+
+      - name: install dependencies
+        run: pnpm bootstrap
+
+      - name: Build gui and sdk
+        run: |
+
+          pnpm bootstrap &&
+          cd packages/nc-gui &&
+          pnpm run generate
+          
+          # copy build to nocodb
+          rsync -rvzh ./dist/ ../nocodb/docker/nc-gui/
+
+      - name: build nocodb
+        run: |
+          # build nocodb ( pack nocodb-sdk and nc-gui )
+          cd packages/nocodb &&
+          EE=true pnpm exec rspack --config rspack.timely.config.js &&
+          # remove bundled libraries (nocodb-sdk, knex-snowflake)
+          pnpm uninstall --save-prod nocodb-sdk  
+
+      - name: Update version in package.json
+        run: |
+          # update package.json
+          cd packages/nocodb &&
+          jq --arg VERSION "$VERSION" '.version = $VERSION' package.json > tmp.json &&
+          mv tmp.json package.json
+        env:
+          VERSION: ${{ inputs.tag }}
+
+      - name: Configure AWS credentials
+          uses: aws-actions/configure-aws-credentials@v1
+          with:
+            aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+            aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+            aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+          id: login-ecr
+          uses: aws-actions/amazon-ecr-login@v1
+
+      - name: Build, tag, and push the image to Amazon ECR
+          id: build-image
+          env:
+            ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+            ECR_REPOSITORY: ${{ secrets.REPO_NAME }}
+            IMAGE_TAG: ${{ inputs.tag }}
+          run: |
+            docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+            docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
