@@ -29,23 +29,17 @@ jobs:
         with:
           node-version: 22.12.0
 
-      - name: Install dependencies
-        run: pnpm bootstrap
-
-      - name: Build GUI and SDK
-        run: |
-          pnpm bootstrap
-          cd packages/nc-gui
-          pnpm run generate
-          mkdir -p ../nocodb/docker/nc-gui/
-          rsync -rvzh ./dist/ ../nocodb/docker/nc-gui/
-
       - name: Build NocoDB
         run: |
-          cd packages/nocodb
-          pnpm install --ignore-scripts --no-frozen-lockfile
-          pnpm run docker:build
-          pnpm uninstall --save-prod nocodb-sdk
+          export NODE_OPTIONS="--max_old_space_size=16384"
+          NOCODB_SDK_PKG_NAME=nocodb-sdk
+          targetEnv=DEV targetVersion=${{ github.event.inputs.tag || inputs.tag }} node scripts/bumpNocodbSdkVersion.js &&
+          pnpm --filter=${NOCODB_SDK_PKG_NAME} install --ignore-scripts --no-frozen-lockfile --ignore-workspace && pnpm --filter=${NOCODB_SDK_PKG_NAME} run build &&
+          targetEnv=DEV node scripts/upgradeNocodbSdk.js &&
+          targetEnv=DEV targetVersion=${{ github.event.inputs.tag || inputs.tag }} node scripts/bumpNcGuiVersion.js &&
+          pnpm --filter=nc-gui install --ignore-scripts --no-frozen-lockfile &&
+          targetEnv=DEV targetVersion=${{ github.event.inputs.tag || inputs.tag }} pnpm --filter=nc-gui run build:copy &&
+          targetEnv=DEV node scripts/upgradeNcGui.js
 
       - name: Update version in package.json
         run: |
