@@ -9,7 +9,7 @@ on:
         required: true
 
 jobs:
-  buildx:
+  build-image:
     runs-on: ubuntu-22.04
     env:
       working-directory: ./packages/nocodb
@@ -90,8 +90,8 @@ jobs:
           docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
   
-  deploy:
-    needs: buildx
+  deploy-on-ecs:
+    needs: build-image
     runs-on: ubuntu-22.04
     steps:
       - name: Configure AWS credentials
