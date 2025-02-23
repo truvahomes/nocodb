@@ -1,71 +1,59 @@
 name: "nocodb.truva.in"
 
 on:
-  # Manually triggered workflow with operation input
   workflow_dispatch:
     inputs:
       tag:
         description: "Docker image tag"
         required: true
       operation:
-        description: "Choose operation: Build only, Deploy only, Both Build and Deploy"
-        required: false
-        default: Build-Deploy
+        description: "Choose operation: build, deploy, build-deploy"
+        required: true
         type: choice
         options:
-          - Build
-          - Deploy
-          - Build-Deploy
+          - build
+          - deploy
+          - build-deploy
 
 jobs:
   build-image:
-    if: inputs.operation == 'Build' || inputs.operation == 'Build-Deploy'
+    if: inputs.operation == 'build' || inputs.operation == 'build-deploy'
     runs-on: ubuntu-22.04
     env:
       working-directory: ./packages/nocodb
     steps:
-      # Setup pnpm package manager
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
         with:
           version: 9
 
-      # Checkout repository
-      - name: Checkout truva branch in the repository
+      - name: Checkout truva branch
         uses: actions/checkout@v3
         with:
-          fetch-depth: 1 # Fetch only the latest commit for efficiency
+          fetch-depth: 1
           ref: truva
 
-      # Setup Node.js with a specific version
       - name: Use Node.js
         uses: actions/setup-node@v3
         with:
           node-version: 22.12.0
 
-      # Install dependencies using pnpm
       - name: Install dependencies
         run: pnpm bootstrap
 
-      # Build GUI and SDK
       - name: Build GUI and SDK
         run: |
           pnpm bootstrap
           cd packages/nc-gui
           pnpm run generate
-          
-          # Ensure target directory exists before copying
           mkdir -p ../nocodb/docker/nc-gui/
           rsync -rvzh ./dist/ ../nocodb/docker/nc-gui/
 
-      # Build NocoDB, including packaging nocodb-sdk and nc-gui
       - name: Build NocoDB
         run: |
           cd packages/nocodb
           pnpm install --ignore-scripts --no-frozen-lockfile
           pnpm run docker:build
-          
-          # Remove bundled libraries (nocodb-sdk, knex-snowflake) to avoid duplication
           pnpm uninstall --save-prod nocodb-sdk
 
       - name: Update version in package.json
@@ -76,7 +64,6 @@ jobs:
         env:
           VERSION: ${{ inputs.tag }}
 
-      # Configure AWS credentials
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
         with:
@@ -84,26 +71,24 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
 
-      # Login to Amazon ECR
       - name: Login to Amazon ECR
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v1
 
-      # Build and push Docker image to Amazon ECR
-      - name: Build, tag, and push the image to Amazon ECR
+      - name: Build and push Docker image
         id: build-image
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           ECR_REPOSITORY: ${{ secrets.REPO_NAME }}
           IMAGE_TAG: ${{ inputs.tag }}
         run: |
-          cd packages/nocodb  # Ensure we're in the correct directory for Docker build
+          cd packages/nocodb
           docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
 
   deploy-on-ecs:
-    if: inputs.operation == 'Deploy' || inputs.operation == 'Build-Deploy'
-    needs: build-image
+    if: inputs.operation == 'deploy' || inputs.operation == 'build-deploy'
+    needs: [build-image]
     runs-on: ubuntu-22.04
     steps:
       - name: Configure AWS credentials
@@ -113,7 +98,6 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
 
-      # Login to Amazon ECR
       - name: Login to Amazon ECR
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v1
@@ -125,25 +109,21 @@ jobs:
 
       - name: Sanitize Task Definition File
         run: |
-          jq ' 
-          del(.taskDefinitionArn, .revision, .status, .requiresAttributes, .compatibilities, .registeredAt, .registeredBy) 
-          ' base-task-definition.json > pre-image-task-definition.json
+          jq 'del(.taskDefinitionArn, .revision, .status, .requiresAttributes, .compatibilities, .registeredAt, .registeredBy)' \
+          base-task-definition.json > pre-image-task-definition.json
 
       - name: Update Task Definition with New Image
         run: |
-          jq '.containerDefinitions[0].image = "${{ steps.login-ecr.outputs.registry }}/${{ secrets.REPO_NAME }}:${{ inputs.tag }}"' pre-image-task-definition.json > deploy-task-definition.json
+          jq '.containerDefinitions[0].image = "${{ steps.login-ecr.outputs.registry }}/${{ secrets.REPO_NAME }}:${{ inputs.tag }}"' \
+          pre-image-task-definition.json > deploy-task-definition.json
 
       - name: Register New Task Definition
         id: register-task
         run: |
-          TASK_DEF_ARN=$(aws ecs register-task-definition --cli-input-json file://deploy-task-definition.json | jq -r '.taskDefinition.taskDefinitionArn')
-          if [[ -z "$TASK_DEF_ARN" || "$TASK_DEF_ARN" == "null" ]]; then
-            echo "Error: Task definition registration failed!"
-            exit 1
-          fi
-          echo "Registered Task Definition ARN: $TASK_DEF_ARN"
+          aws ecs register-task-definition --cli-input-json file://deploy-task-definition.json | \
+          jq -r '.taskDefinition.taskDefinitionArn'
 
-      - name: Update ECS Service to Use New Task Definition
+      - name: Update ECS Service
         run: |
           aws ecs update-service \
           --cluster ${{ secrets.ECS_CLUSTER_NAME }} \
