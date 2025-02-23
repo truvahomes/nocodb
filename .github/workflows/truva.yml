@@ -53,6 +53,7 @@ jobs:
       - name: Build NocoDB Backend
         run: |
           cd packages/nocodb
+          pnpm i ../nc-lib-gui
           pnpm run build:obfuscate
           pnpm run docker:build
 
