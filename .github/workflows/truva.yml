@@ -3,22 +3,12 @@ name: "nocodb.truva.in"
 on:
   workflow_dispatch:
     inputs:
-      action:
-        description: "Choose what to run"
-        required: true
-        type: choice
-        options:
-          - build
-          - deploy
-          - build+deploy
-        default: build+deploy
       tag:
         description: "Docker image tag"
         required: true
 
 jobs:
   build-image:
-    if: inputs.action == 'build' || inputs.action == 'build+deploy'
     runs-on: ubuntu-22.04
     env:
       working-directory: ./packages/nocodb
@@ -88,9 +78,8 @@ jobs:
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
 
   deploy-on-ecs:
-    if: inputs.action == 'deploy' || inputs.action == 'build+deploy'
     runs-on: ubuntu-22.04
-    needs: [build-image]  # Runs after build if build+deploy is chosen
+    needs: build-image
     steps:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
