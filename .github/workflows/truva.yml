@@ -104,16 +104,22 @@ jobs:
       - name: Download ECS Task Definition
         run: |
           aws ecs describe-task-definition --task-definition ${{ secrets.ECS_TASK_DEFINITION }} \
-          --query taskDefinition > task-definition.json
+          --query taskDefinition > base-task-definition.json
+
+      - name: Sanitize Task Definition File
+        run: |
+          jq ' 
+          del(.taskDefinitionArn, .revision, .status, .requiresAttributes, .compatibilities, .registeredAt, .registeredBy) 
+          ' base-task-definition.json > pre-image-task-definition.json
 
       - name: Update Task Definition with New Image
         run: |
-          jq '.containerDefinitions[0].image = "${{ steps.login-ecr.outputs.registry }}/${{ secrets.REPO_NAME }}:${{ inputs.tag }}"' task-definition.json > new-task-definition.json
+          jq '.containerDefinitions[0].image = "${{ steps.login-ecr.outputs.registry }}/${{ secrets.REPO_NAME }}:${{ inputs.tag }}"' pre-image-task-definition.json > deploy-task-definition.json
 
       - name: Register New Task Definition
         id: register-task
         run: |
-          aws ecs register-task-definition --cli-input-json file://new-task-definition.json | \
+          aws ecs register-task-definition --cli-input-json file://deploy-task-definition.json | \
           jq -r '.taskDefinition.taskDefinitionArn'
 
       - name: Update ECS Service to Use New Task Definition
