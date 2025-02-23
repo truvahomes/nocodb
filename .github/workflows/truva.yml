@@ -1,15 +1,25 @@
 name: "nocodb.truva.in"
 
 on:
-  # Manually triggered workflow
+  # Manually triggered workflow with operation input
   workflow_dispatch:
     inputs:
       tag:
         description: "Docker image tag"
         required: true
+      operation:
+        description: "Choose operation: build, deploy, build-deploy"
+        required: false
+        default: "Build and Deploy"
+        type: choice
+        options:
+          - "Build"
+          - "Deploy"
+          - "Build and Deploy"
 
 jobs:
   build-image:
+    if: inputs.operation == 'Build' || inputs.operation == 'Build and Deploy'
     runs-on: ubuntu-22.04
     env:
       working-directory: ./packages/nocodb
@@ -66,7 +76,7 @@ jobs:
         env:
           VERSION: ${{ inputs.tag }}
 
-      # Configure AWS credentials (✅ FIXED: Secrets are now referenced correctly)
+      # Configure AWS credentials
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
         with:
@@ -90,8 +100,9 @@ jobs:
           cd packages/nocodb  # Ensure we're in the correct directory for Docker build
           docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-  
+
   deploy-on-ecs:
+    if: inputs.operation == 'Deploy' || inputs.operation == 'Build and Deploy'
     needs: build-image
     runs-on: ubuntu-22.04
     steps:
@@ -101,6 +112,11 @@ jobs:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
+
+      # Login to Amazon ECR
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
 
       - name: Download ECS Task Definition
         run: |
@@ -120,8 +136,12 @@ jobs:
       - name: Register New Task Definition
         id: register-task
         run: |
-          aws ecs register-task-definition --cli-input-json file://deploy-task-definition.json | \
-          jq -r '.taskDefinition.taskDefinitionArn'
+          TASK_DEF_ARN=$(aws ecs register-task-definition --cli-input-json file://deploy-task-definition.json | jq -r '.taskDefinition.taskDefinitionArn')
+          if [[ -z "$TASK_DEF_ARN" || "$TASK_DEF_ARN" == "null" ]]; then
+            echo "Error: Task definition registration failed!"
+            exit 1
+          fi
+          echo "Registered Task Definition ARN: $TASK_DEF_ARN"
 
       - name: Update ECS Service to Use New Task Definition
         run: |
