@@ -8,7 +8,7 @@ on:
         description: "Docker image tag"
         required: true
       operation:
-        description: "Choose operation: build, deploy, build-deploy"
+        description: "Choose operation: Build only, Deploy only, Both Build and Deploy"
         required: false
         default: "Build and Deploy"
         type: choice
