@@ -40,20 +40,19 @@ jobs:
       - name: Build NocoDB SDK
         run: |
           cd packages/nocodb-sdk
-          pnpm install
+          pnpm install --no-frozen-lockfile
           pnpm run build
 
       - name: Build NocoDB GUI
         run: |
           cd packages/nc-gui
-          pnpm install
+          pnpm install --no-frozen-lockfile
           pnpm run build:copy
           rsync -rvzh ./dist/ ../nocodb/docker/nc-gui/
 
       - name: Build NocoDB Backend
         run: |
           cd packages/nocodb
-          pnpm i ../nc-lib-gui
           pnpm run build:obfuscate
           pnpm run docker:build
 
@@ -76,7 +75,7 @@ jobs:
           IMAGE_TAG: ${{ inputs.tag }}
         run: |
           cd packages/nocodb
-          docker build . -f Dockerfile.local -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          docker build --no-cache . -f Dockerfile.local -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
 
   deploy-on-ecs:
