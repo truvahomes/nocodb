@@ -54,9 +54,8 @@ jobs:
         run: |
           cd packages/nocodb
           pnpm run build:obfuscate
-          npx tsc -p tsconfig.json
-          npx tsc -p tsconfig.module.json
-          pnpm run docker:build    
+          pnpm run docker:build
+          pnpm uninstall nocodb-sdk
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
