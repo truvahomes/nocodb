@@ -47,7 +47,7 @@ jobs:
         run: |
           cd packages/nc-gui
           pnpm install
-          pnpm run generate
+          pnpm run build:copy
           rsync -rvzh ./dist/ ../nocodb/docker/nc-gui/
 
       - name: Build NocoDB Backend
