@@ -10,8 +10,6 @@ on:
 jobs:
   build-image:
     runs-on: ubuntu-22.04
-    env:
-      working-directory: ./packages/nocodb
     steps:
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
@@ -40,13 +38,13 @@ jobs:
       - name: Build NocoDB SDK
         run: |
           cd packages/nocodb-sdk
-          pnpm install --no-frozen-lockfile
+          pnpm install
           pnpm run build
 
       - name: Build NocoDB GUI
         run: |
           cd packages/nc-gui
-          pnpm install --no-frozen-lockfile
+          pnpm install
           pnpm run build:copy
           rsync -rvzh ./dist/ ../nocodb/docker/nc-gui/
 
@@ -80,7 +78,7 @@ jobs:
           IMAGE_TAG: ${{ inputs.tag }}
         run: |
           cd packages/nocodb
-          docker build --no-cache . -f Dockerfile.truva -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          docker build . -f Dockerfile.truva -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
 
   deploy-on-ecs:
