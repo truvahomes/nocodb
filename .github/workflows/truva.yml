@@ -50,10 +50,10 @@ jobs:
           pnpm run build:copy
           rsync -rvzh ./dist/ ../nocodb/docker/nc-gui/
 
-      - name: Copy NocoDB GUI-Libs (nc-gui-libs)
+      - name: Copy NocoDB GUI Library (nc-lib-gui)
         run: |
-          mkdir -p packages/nocodb/docker/nc-lib-gui
-          cp -r packages/nc-lib-gui/ packages/nocodb/docker/nc-lib-gui/
+          mkdir -p packages/nocodb/docker/nc-lib-gui/
+          cp -rv packages/nc-lib-gui/ packages/nocodb/docker/nc-lib-gui/
 
       - name: Build NocoDB Backend
         run: |
