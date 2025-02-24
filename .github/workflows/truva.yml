@@ -51,7 +51,7 @@ jobs:
       - name: Copy NocoDB GUI Library (nc-lib-gui)
         run: |
           mkdir -p packages/nocodb/docker/nc-lib-gui/
-          cp -rv packages/nc-lib-gui/ packages/nocodb/docker/nc-lib-gui/
+          cp -rv packages/nc-lib-gui/* packages/nocodb/docker/nc-lib-gui/
 
       - name: Build NocoDB Backend
         run: |
