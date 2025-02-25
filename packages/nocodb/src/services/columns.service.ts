@@ -58,6 +58,9 @@ import {
   validatePayload,
   validateRequiredField,
   validateRollupPayload,
+  isFloorSetColumn,
+  generateFloorSet,
+  generateFloorSetString,
 } from '~/helpers';
 import { NcError } from '~/helpers/catchError';
 import getColumnPropsFromUIDT from '~/helpers/getColumnPropsFromUIDT';
@@ -1734,6 +1737,38 @@ export class ColumnsService {
     }
 
     return table;
+  }
+
+  async columnFloorSetGenerate(
+    context: NcContext, 
+    param: { 
+      columnId: string;
+      req: NcRequest;
+      user: UserType;
+      reuse?: ReusableParams;
+      apiVersion?: NcApiVersion;
+    }) {
+    const column = await Column.get(context, { colId: param.columnId });
+    if (!column) {
+      NcError.notFound(`Column with id ${param.columnId} not found`);
+    }
+    if (!isFloorSetColumn(column)) {
+      NcError.badRequest(
+        `Column with id ${param.columnId} (name: ${column.column_name}) is not a floor set column. ` +
+        `Column must be Multi/Single Select and column.meta.is_floor_set must be set to true for generating floor set options.`
+      );
+    }
+    if (!column.colOptions) {
+      column.colOptions = {};
+    }
+    column.colOptions.options = generateFloorSet();
+    column.dtxp = generateFloorSetString();
+    await Column.update(
+      context, 
+      param.columnId,
+      column
+    );
+    return await Column.get(context, { colId: param.columnId });;
   }
 
   async columnGet(context: NcContext, param: { columnId: string }) {
