@@ -1220,7 +1220,7 @@ export function renderFormulaURL(
           y: currentY,
           width: wordWidth,
           height: lineHeight,
-          url: url,
+          url,
         })
 
         const underlineY = currentY + lineHeight + underlineOffset
