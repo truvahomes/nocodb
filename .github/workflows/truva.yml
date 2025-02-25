@@ -70,6 +70,8 @@ jobs:
       - name: Login to Amazon ECR
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v1
+        with:
+          mask-password: true
 
       - name: Build, Tag and Push the image to Amazon ECR
         id: build-docker-image
@@ -101,6 +103,8 @@ jobs:
       - name: Login to Amazon ECR
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v1
+        with:
+          mask-password: true
 
       - name: Download ECS Task Definition
         run: |
@@ -114,8 +118,11 @@ jobs:
 
       - name: Update Task Definition with New Image
         run: |
-          jq '.containerDefinitions[0].image = "${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:${{ env.IMAGE_TAG }}"' \
-          pre-image-task-definition.json > deploy-task-definition.json
+          jq --arg ECR_REGISTRY "$ECR_REGISTRY" \
+            --arg ECR_REPOSITORY "$ECR_REPOSITORY" \
+            --arg IMAGE_TAG "$IMAGE_TAG" \
+            '.containerDefinitions[0].image = ($ECR_REGISTRY + "/" + $ECR_REPOSITORY + ":" + $IMAGE_TAG)' \
+            pre-image-task-definition.json > deploy-task-definition.json
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           ECR_REPOSITORY: ${{ secrets.REPO_NAME }}
