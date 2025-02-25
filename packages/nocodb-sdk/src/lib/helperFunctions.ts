@@ -27,6 +27,10 @@ const isSystemColumn = (col): boolean =>
       col.system)
   );
 
+const isUserMarkedSystemColumn = (col): boolean => {
+  return col.system && col.meta && col.meta.user_marked_system;
+};
+
 const isSelfReferencingTableColumn = (col): boolean => {
   return (
     col &&
@@ -237,6 +241,7 @@ export {
   getSystemColumnsIds,
   getSystemColumns,
   isSystemColumn,
+  isUserMarkedSystemColumn,
   isSelfReferencingTableColumn,
   extractRolesObj,
   stringifyRolesObj,

@@ -3,6 +3,7 @@ import {
   isCreatedOrLastModifiedTimeCol,
   isOrderCol,
   isSystemColumn,
+  isUserMarkedSystemColumn,
   RelationTypes,
   UITypes,
   ViewTypes,
@@ -242,6 +243,7 @@ const getAst = async (
     } else if (getHiddenColumn) {
       isRequested =
         !isSystemColumn(col) ||
+        isUserMarkedSystemColumn(col) ||
         (isCreatedOrLastModifiedTimeCol(col) && col.system) ||
         col.pk;
     } else if (allowedCols && (!includePkByDefault || !col.pk)) {
