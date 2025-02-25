@@ -114,8 +114,12 @@ jobs:
 
       - name: Update Task Definition with New Image
         run: |
-          jq '.containerDefinitions[0].image = "${{ steps.login-ecr.outputs.registry }}/${{ secrets.REPO_NAME }}:truva-${{ steps.commit-hash.outputs.commit_hash }}"' \
+          jq '.containerDefinitions[0].image = "${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:${{ env.IMAGE_TAG }}"' \
           pre-image-task-definition.json > deploy-task-definition.json
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: ${{ secrets.REPO_NAME }}
+          IMAGE_TAG: truva-${{ steps.commit-hash.outputs.commit_hash }}
 
       - name: Register New Task Definition
         id: register-task
