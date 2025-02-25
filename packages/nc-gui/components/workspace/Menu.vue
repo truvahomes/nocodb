@@ -11,7 +11,7 @@ const { appInfo } = useGlobal()
       >
         <a
           class="transition-all duration-200 transform w-24 min-w-10"
-          href="https://github.com/nocodb/nocodb"
+          href="https://github.com/truvahomes/nocodb"
           target="_blank"
           rel="noopener noreferrer"
         >

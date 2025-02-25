@@ -241,9 +241,11 @@ export class MetaDiffsService {
           continue;
         }
 
-        const [oldCol] = oldMeta.columns.splice(oldColIdx, 1);
-
-        if (oldCol.dt !== column.dt) {
+        const [oldCol] = oldMeta.columns.splice(oldColIdx, 1);        
+        if (
+          oldCol.dt !== column.dt ||
+          oldCol.ct !== column.ct
+        ) {
           tableProp.detectedChanges.push({
             type: MetaDiffType.TABLE_COLUMN_TYPE_CHANGE,
             msg: `Column type changed(${column.cn})`,
