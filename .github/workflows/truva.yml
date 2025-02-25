@@ -76,7 +76,7 @@ jobs:
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           ECR_REPOSITORY: ${{ secrets.REPO_NAME }}
-          IMAGE_TAG: ${{ inputs.tag }}
+          IMAGE_TAG: truva-${{ steps.commit-hash.outputs.commit_hash }}
         run: |
           cd packages/nocodb
           docker build . -f Dockerfile.truva -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
