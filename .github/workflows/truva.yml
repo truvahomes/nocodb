@@ -39,13 +39,13 @@ jobs:
       - name: Build NocoDB SDK
         run: |
           cd packages/nocodb-sdk
-          pnpm install
+          pnpm install --no-frozen-lockfile
           pnpm run build
 
       - name: Build NocoDB GUI
         run: |
           cd packages/nc-gui
-          pnpm install
+          pnpm install --no-frozen-lockfile
           pnpm run build:copy
           rsync -rvzh ./dist/ ../nocodb/docker/nc-gui/
 
