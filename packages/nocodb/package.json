@@ -1,6 +1,6 @@
 {
   "name": "nocodb",
-  "version": "0.262.0",
+  "version": "0.262.1",
   "description": "NocoDB Backend",
   "main": "dist/bundle.js",
   "author": {
@@ -102,6 +102,7 @@
     "fs-extra": "^9.1.0",
     "glob": "^10.4.5",
     "handlebars": "^4.7.8",
+    "handlebars-helpers": "^0.10.0",
     "html-to-json-parser": "^2.0.1",
     "iconv-lite": "^0.6.3",
     "import-fresh": "^3.3.1",
@@ -127,7 +128,7 @@
     "multer": "^1.4.5-lts.1",
     "mysql2": "^3.12.0",
     "nanoid": "^3.3.8",
-    "nc-lib-gui": "0.262.0",
+    "nc-lib-gui": "0.262.1",
     "nocodb-sdk": "workspace:^",
     "node-addon-api": "^8.3.0",
     "nodemailer": "^6.10.0",

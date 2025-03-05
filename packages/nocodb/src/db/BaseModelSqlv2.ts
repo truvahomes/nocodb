@@ -83,8 +83,6 @@ import {
 import {
   extractExcludedColumnNames,
   getAliasGenerator,
-  isEE,
-  isOnPrem,
   nocoExecute,
   populateUpdatePayloadDiff,
 } from '~/utils';
@@ -116,6 +114,7 @@ import {
   _wherePk,
   getCompositePkValue,
   getOppositeRelationType,
+  isDataAuditEnabled as isDataAuditEnabledFn,
 } from '~/helpers/dbHelpers';
 
 dayjs.extend(utc);
@@ -379,6 +378,9 @@ class BaseModelSqlv2 implements IBaseModelSqlV2 {
 
       data = await baseModel.readByPk(...rest);
     }
+
+    // load columns if not loaded already
+    await model.getCachedColumns(this.context);
 
     if (extractDisplayValueData) {
       return data ? data[model.displayValue.title] ?? null : '';
@@ -2406,17 +2408,12 @@ class BaseModelSqlv2 implements IBaseModelSqlV2 {
         (c) => c.id === colId,
       );
 
-      const chilCol = await (
-        (await relColumn.getColOptions(
-          this.context,
-        )) as LinkToAnotherRecordColumn
-      ).getChildColumn(this.context);
+      const relationColOpts = (await relColumn.getColOptions(
+        this.context,
+      )) as LinkToAnotherRecordColumn;
+      const chilCol = await relationColOpts.getChildColumn(this.context);
       const childTable = await chilCol.getModel(this.context);
-      const parentCol = await (
-        (await relColumn.getColOptions(
-          this.context,
-        )) as LinkToAnotherRecordColumn
-      ).getParentColumn(this.context);
+      const parentCol = await relationColOpts.getParentColumn(this.context);
       const parentTable = await parentCol.getModel(this.context);
       const childModel = await Model.getBaseModelSQL(this.context, {
         model: childTable,
@@ -2433,8 +2430,16 @@ class BaseModelSqlv2 implements IBaseModelSqlV2 {
         extractPkAndPv: true,
         fieldsSet: args.fieldsSet,
       });
-      await this.applySortAndFilter({ table: childTable, where, qb, sort });
-
+      const view = relationColOpts.fk_target_view_id
+        ? await View.get(this.context, relationColOpts.fk_target_view_id)
+        : await View.getDefaultView(this.context, childModel.model.id);
+      await this.applySortAndFilter({
+        table: childTable,
+        where,
+        qb,
+        sort,
+        view,
+      });
       const childQb = this.dbDriver.queryBuilder().from(
         this.dbDriver
           .unionAll(
@@ -2571,6 +2576,14 @@ class BaseModelSqlv2 implements IBaseModelSqlV2 {
       onlySort: true,
     });
 
+    if (!sort || sort === '') {
+      const view = relColOptions.fk_target_view_id
+        ? await View.get(this.context, relColOptions.fk_target_view_id)
+        : await View.getDefaultView(this.context, childTable.id);
+      const childSorts = await view.getSorts(this.context);
+      await sortV2(childModel, childSorts, qb);
+    }
+
     // todo: sanitize
     if (!selectAllRecords) {
       // get one extra record to check if there are more records in case of v3 api and nested
@@ -2667,18 +2680,12 @@ class BaseModelSqlv2 implements IBaseModelSqlV2 {
       const relColumn = (await this.model.getColumns(this.context)).find(
         (c) => c.id === colId,
       );
-
-      const chilCol = await (
-        (await relColumn.getColOptions(
-          this.context,
-        )) as LinkToAnotherRecordColumn
-      ).getChildColumn(this.context);
+      const relationColOpts = (await relColumn.getColOptions(
+        this.context,
+      )) as LinkToAnotherRecordColumn;
+      const chilCol = await relationColOpts.getChildColumn(this.context);
       const childTable = await chilCol.getModel(this.context);
-      const parentCol = await (
-        (await relColumn.getColOptions(
-          this.context,
-        )) as LinkToAnotherRecordColumn
-      ).getParentColumn(this.context);
+      const parentCol = await relationColOpts.getParentColumn(this.context);
       const parentTable = await parentCol.getModel(this.context);
       const childBaseModel = await Model.getBaseModelSQL(this.context, {
         model: childTable,
@@ -2863,11 +2870,15 @@ class BaseModelSqlv2 implements IBaseModelSqlV2 {
 
     await childModel.selectObject({ qb, fieldsSet: args.fieldsSet });
 
+    const view = relColOptions.fk_target_view_id
+      ? await View.get(this.context, relColOptions.fk_target_view_id)
+      : await View.getDefaultView(this.context, childTable.id);
     await this.applySortAndFilter({
       table: childTable,
       where,
       qb,
       sort,
+      view,
     });
 
     const finalQb = this.dbDriver.unionAll(
@@ -2888,11 +2899,11 @@ class BaseModelSqlv2 implements IBaseModelSqlV2 {
             (apiVersion === NcApiVersion.V3 && nested ? 1 : 0),
         );
         query.offset(+rest?.offset || 0);
-
         return this.isSqlite ? this.dbDriver.select().from(query) : query;
       }),
       !this.isSqlite,
     );
+    console.log(finalQb.toQuery());
 
     const children = await this.execAndParse(
       finalQb,
@@ -5990,6 +6001,12 @@ class BaseModelSqlv2 implements IBaseModelSqlV2 {
           );
         }
 
+        if (!allowSystemColumn && col.readonly) {
+          NcError.badRequest(
+            `Column "${col.title}" is readonly column and cannot be updated`,
+          );
+        }
+
         if (
           col.system &&
           !allowSystemColumn &&
@@ -6332,12 +6349,14 @@ class BaseModelSqlv2 implements IBaseModelSqlV2 {
       raw = false,
       throwExceptionIfNotExist = false,
       isSingleRecordUpdation = false,
+      allowSystemColumn = false,
       apiVersion,
     }: {
       cookie?: any;
       raw?: boolean;
       throwExceptionIfNotExist?: boolean;
       isSingleRecordUpdation?: boolean;
+      allowSystemColumn?: boolean;
       apiVersion?: NcApiVersion;
     } = {},
   ) {
@@ -6348,7 +6367,7 @@ class BaseModelSqlv2 implements IBaseModelSqlV2 {
       // validate update data
       if (!raw) {
         for (const d of datas) {
-          await this.validate(d, columns);
+          await this.validate(d, columns, { allowSystemColumn });
         }
       }
 
@@ -6790,6 +6809,8 @@ class BaseModelSqlv2 implements IBaseModelSqlV2 {
         }
       }
 
+      await this.beforeBulkDelete(deleted, this.dbDriver, cookie);
+
       const execQueries: ((
         trx: Knex.Transaction,
         ids: any[],
@@ -7135,10 +7156,18 @@ class BaseModelSqlv2 implements IBaseModelSqlV2 {
   }
 
   public async beforeInsert(data: any, _trx: any, req): Promise<void> {
+    if (this.model.synced) {
+      NcError.badRequest('Cannot insert into synced table');
+    }
+
     await this.handleHooks('before.insert', null, data, req);
   }
 
   public async beforeBulkInsert(data: any, _trx: any, req): Promise<void> {
+    if (this.model.synced) {
+      NcError.badRequest('Cannot insert into synced table');
+    }
+
     await this.handleHooks('before.bulkInsert', null, data, req);
   }
 
@@ -7165,7 +7194,7 @@ class BaseModelSqlv2 implements IBaseModelSqlV2 {
     ]);
 
     // disable external source audit in cloud
-    if (!(isEE && !isOnPrem && !(await this.getSource())?.isMeta())) {
+    if (await this.isDataAuditEnabled()) {
       await Audit.insert(
         await generateAuditV1Payload<DataInsertPayload>(
           AuditV1OperationTypes.DATA_INSERT,
@@ -7174,7 +7203,7 @@ class BaseModelSqlv2 implements IBaseModelSqlV2 {
               ...this.context,
               source_id: this.model.source_id,
               fk_model_id: this.model.id,
-              row_id: id,
+              row_id: this.extractPksValues(id, true),
             },
             details: {
               data: formatDataForAudit(filteredAuditData, this.model.columns),
@@ -7196,10 +7225,7 @@ class BaseModelSqlv2 implements IBaseModelSqlV2 {
     let parentAuditId;
 
     // disable external source audit in cloud
-    if (
-      !req.ncParentAuditId &&
-      !(isEE && !isOnPrem && !(await this.getSource())?.isMeta())
-    ) {
+    if (!req.ncParentAuditId && (await this.isDataAuditEnabled())) {
       parentAuditId = await Noco.ncMeta.genNanoid(MetaTable.AUDIT);
 
       await Audit.insert(
@@ -7222,7 +7248,7 @@ class BaseModelSqlv2 implements IBaseModelSqlV2 {
     }
 
     // disable external source audit in cloud
-    if (!(isEE && !isOnPrem && !(await this.getSource())?.isMeta())) {
+    if (await this.isDataAuditEnabled()) {
       // data here is not mapped to column alias
       await Audit.insert(
         await Promise.all(
@@ -7271,7 +7297,7 @@ class BaseModelSqlv2 implements IBaseModelSqlV2 {
     const id = this.extractPksValues(data);
 
     // disable external source audit in cloud
-    if (!(isEE && !isOnPrem && !(await this.getSource())?.isMeta())) {
+    if (await this.isDataAuditEnabled()) {
       await Audit.insert(
         await generateAuditV1Payload<DataDeletePayload>(
           AuditV1OperationTypes.DATA_DELETE,
@@ -7284,7 +7310,7 @@ class BaseModelSqlv2 implements IBaseModelSqlV2 {
               ...this.context,
               source_id: this.model.source_id,
               fk_model_id: this.model.id,
-              row_id: id,
+              row_id: this.extractPksValues(id, true),
             },
             req,
           },
@@ -7308,7 +7334,7 @@ class BaseModelSqlv2 implements IBaseModelSqlV2 {
     const parentAuditId = await Noco.ncMeta.genNanoid(MetaTable.AUDIT);
 
     // disable external source audit in cloud
-    if (!(isEE && !isOnPrem && !(await this.getSource())?.isMeta())) {
+    if (await this.isDataAuditEnabled()) {
       await Audit.insert(
         await generateAuditV1Payload<DataBulkDeletePayload>(
           AuditV1OperationTypes.DATA_BULK_DELETE,
@@ -7330,7 +7356,7 @@ class BaseModelSqlv2 implements IBaseModelSqlV2 {
     const column_meta = extractColsMetaForAudit(this.model.columns);
 
     // disable external source audit in cloud
-    if (!(isEE && !isOnPrem && !(await this.getSource())?.isMeta())) {
+    if (await this.isDataAuditEnabled()) {
       await Audit.insert(
         await Promise.all(
           data?.map?.((d) =>
@@ -7376,7 +7402,7 @@ class BaseModelSqlv2 implements IBaseModelSqlV2 {
       const parentAuditId = await Noco.ncMeta.genNanoid(MetaTable.AUDIT);
 
       // disable external source audit in cloud
-      if (!(isEE && !isOnPrem && !(await this.getSource())?.isMeta())) {
+      if (await this.isDataAuditEnabled()) {
         await Audit.insert(
           await generateAuditV1Payload<DataBulkUpdatePayload>(
             AuditV1OperationTypes.DATA_BULK_UPDATE,
@@ -7506,7 +7532,7 @@ class BaseModelSqlv2 implements IBaseModelSqlV2 {
     }
 
     // disable external source audit in cloud
-    if (!(isEE && !isOnPrem && !(await this.getSource())?.isMeta())) {
+    if (await this.isDataAuditEnabled()) {
       const formattedOldData = formatDataForAudit(oldData, this.model.columns);
       const formattedData = formatDataForAudit(data, this.model.columns);
 
@@ -7562,7 +7588,17 @@ class BaseModelSqlv2 implements IBaseModelSqlV2 {
   }
 
   public async beforeDelete(data: any, _trx: any, req): Promise<void> {
+    if (this.model.synced) {
+      NcError.badRequest('Cannot delete from synced table');
+    }
+
     await this.handleHooks('before.delete', null, data, req);
+  }
+
+  public async beforeBulkDelete(_data: any, _trx: any, _req): Promise<void> {
+    if (this.model.synced) {
+      NcError.badRequest('Cannot delete from synced table');
+    }
   }
 
   protected async handleHooks(hookName, prevData, newData, req): Promise<void> {
@@ -7584,6 +7620,9 @@ class BaseModelSqlv2 implements IBaseModelSqlV2 {
 
   // todo: handle composite primary key
   public extractPksValues(data: any, asString = false) {
+    // if data is not object return as it is
+    if (!data || typeof data !== 'object') return data;
+
     // data can be still inserted without PK
 
     // if composite primary key return an object with all the primary keys
@@ -7615,8 +7654,12 @@ class BaseModelSqlv2 implements IBaseModelSqlV2 {
   async validate(
     data: Record<string, any>,
     columns?: Column[],
-    { typecast }: { typecast?: boolean } = {
+    {
+      typecast,
+      allowSystemColumn,
+    }: { typecast?: boolean; allowSystemColumn?: boolean } = {
       typecast: false,
+      allowSystemColumn: false,
     },
   ): Promise<boolean> {
     const cols = columns || (await this.model.getColumns(this.context));
@@ -7635,11 +7678,18 @@ class BaseModelSqlv2 implements IBaseModelSqlV2 {
         }
 
         if (
+          !allowSystemColumn &&
           column.system &&
           ![UITypes.ForeignKey, UITypes.Order].includes(column.uidt)
         ) {
           NcError.badRequest(
             `Column "${column.title}" is system column and cannot be updated`,
+          );
+        }
+
+        if (!allowSystemColumn && column.readonly) {
+          NcError.badRequest(
+            `Column "${column.title}" is readonly column and cannot be updated`,
           );
         }
       }
@@ -7905,7 +7955,7 @@ class BaseModelSqlv2 implements IBaseModelSqlV2 {
     type: RelationTypes;
   }): Promise<void> {
     // disable external source audit in cloud
-    if (isEE && !isOnPrem && !(await this.getSource())?.isMeta()) {
+    if (!(await this.isDataAuditEnabled())) {
       return;
     }
 
@@ -7941,7 +7991,7 @@ class BaseModelSqlv2 implements IBaseModelSqlV2 {
             ...this.context,
             source_id: model.source_id,
             fk_model_id: model.id,
-            row_id: rowId as string,
+            row_id: this.extractPksValues(rowId, true) as string,
           },
           details: {
             table_title: model.title,
@@ -8032,7 +8082,7 @@ class BaseModelSqlv2 implements IBaseModelSqlV2 {
     type: RelationTypes;
   }): Promise<void> {
     // disable external source audit in cloud
-    if (isEE && !isOnPrem && !(await this.getSource())?.isMeta()) {
+    if (!(await this.isDataAuditEnabled())) {
       return;
     }
     if (!refDisplayValue) {
@@ -8067,7 +8117,7 @@ class BaseModelSqlv2 implements IBaseModelSqlV2 {
             ...this.context,
             source_id: model.source_id,
             fk_model_id: model.id,
-            row_id: rowId as string,
+            row_id: this.extractPksValues(rowId, true) as string,
           },
           details: {
             table_title: model.title,
@@ -10390,12 +10440,6 @@ class BaseModelSqlv2 implements IBaseModelSqlV2 {
                   );
                 }
 
-                if (!/^https?:\/\//i.test(attachment.url)) {
-                  NcError.unprocessableEntity(
-                    `Attachment url '${attachment.url}' is not a valid url`,
-                  );
-                }
-
                 if (attachment.url.length > 8 * 1024) {
                   NcError.unprocessableEntity(
                     `Attachment url '${attachment.url}' is too long`,
@@ -10878,7 +10922,7 @@ class BaseModelSqlv2 implements IBaseModelSqlV2 {
     req: NcRequest;
   }) {
     // disable external source audit in cloud
-    if (isEE && !isOnPrem && !(await this.getSource())?.isMeta()) return;
+    if (!(await this.isDataAuditEnabled())) return;
 
     const auditUpdateObj = [];
     for (const rowId of rowIds) {
@@ -10915,6 +10959,12 @@ class BaseModelSqlv2 implements IBaseModelSqlV2 {
     req: NcRequest;
   }) {
     // placeholder
+  }
+
+  async isDataAuditEnabled() {
+    return isDataAuditEnabledFn({
+      isMetaSource: !!(await this.getSource())?.isMeta(),
+    }) as boolean;
   }
 
   getViewId() {

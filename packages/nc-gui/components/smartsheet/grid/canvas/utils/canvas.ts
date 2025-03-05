@@ -473,6 +473,7 @@ export const renderMarkdownBlocks = (
     fillStyle,
     mousePosition = { x: 0, y: 0 },
     cellRenderStore,
+    fontFamily,
   }: {
     blocks: Block[]
     x: number
@@ -484,6 +485,7 @@ export const renderMarkdownBlocks = (
     lineHeight: number
     cellRenderStore?: CellRenderStore
     fillStyle?: string
+    fontFamily?: string
     mousePosition?: { x: number; y: number }
   },
 ) => {
@@ -498,7 +500,7 @@ export const renderMarkdownBlocks = (
   // Save the current font so we can restore it later
   const defaultFont = ctx.font
   const baseFontSize = 13
-  const fontFamily = 'Manrope'
+  if (!fontFamily) fontFamily = 'Manrope'
   const defaultFillStyle = ctx.fillStyle
   const defaultStrokeStyle = ctx.strokeStyle
 
@@ -916,6 +918,7 @@ export const renderMarkdown = (
       maxWidth,
       mousePosition,
       cellRenderStore,
+      fontFamily,
     })
   } else {
     /**

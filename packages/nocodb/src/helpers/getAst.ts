@@ -1,6 +1,7 @@
 import {
   isCreatedOrLastModifiedByCol,
   isCreatedOrLastModifiedTimeCol,
+  isLinksOrLTAR,
   isOrderCol,
   isSystemColumn,
   isUserMarkedSystemColumn,
@@ -245,6 +246,17 @@ const getAst = async (
         !isSystemColumn(col) ||
         isUserMarkedSystemColumn(col) ||
         (isCreatedOrLastModifiedTimeCol(col) && col.system) ||
+        // include all non-has-many system links(self-link) columns since has-many is part of mm relation and which is not required
+        (isLinksOrLTAR(col) &&
+          col.system &&
+          [
+            RelationTypes.BELONGS_TO,
+            RelationTypes.MANY_TO_MANY,
+            RelationTypes.ONE_TO_ONE,
+          ].includes(
+            (col.colOptions as LinkToAnotherRecordColumn)
+              ?.type as RelationTypes,
+          )) ||
         col.pk;
     } else if (allowedCols && (!includePkByDefault || !col.pk)) {
       isRequested =

@@ -104,7 +104,7 @@ export const LongTextCellRenderer: CellRenderer = {
 
       for (const link of links) {
         if (isBoxHovered(link, mousePosition)) {
-          window.open(link.url, '_blank')
+          confirmPageLeavingRedirect(link.url, '_blank')
           return true
         }
       }
@@ -127,7 +127,7 @@ export const LongTextCellRenderer: CellRenderer = {
     if (isAIPromptCol(column?.columnObj)) {
       return AILongTextCellRenderer.handleKeyDown?.(ctx)
     }
-    if (column.readonly) return
+    if (column.readonly || column.columnObj?.readonly) return
     if (/^[a-zA-Z0-9]$/.test(e.key)) {
       makeCellEditable(row.rowMeta!.rowIndex!, column)
       return true

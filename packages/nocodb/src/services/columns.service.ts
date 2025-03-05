@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import {
   AppEvents,
   ButtonActionsType,
@@ -13,6 +13,7 @@ import {
   partialUpdateAllowedTypes,
   readonlyMetaAllowedTypes,
   RelationTypes,
+  SqlUiFactory,
   substituteColumnAliasWithIdInFormula,
   substituteColumnIdWithAliasInFormula,
   UITypes,
@@ -20,7 +21,6 @@ import {
 } from 'nocodb-sdk';
 import { pluralize, singularize } from 'inflection';
 import rfdc from 'rfdc';
-import { parseMetaProp } from 'src/utils/modelUtils';
 import { NcApiVersion } from 'nocodb-sdk';
 import type {
   ColumnReqType,
@@ -31,9 +31,13 @@ import type {
 import type SqlMgrv2 from '~/db/sql-mgr/v2/SqlMgrv2';
 import type { Base, LinkToAnotherRecordColumn } from '~/models';
 import type CustomKnex from '~/db/CustomKnex';
-import type SqlClient from '~/db/sql-client/lib/SqlClient';
 import type { BaseModelSqlv2 } from '~/db/BaseModelSqlv2';
 import type { NcContext, NcRequest } from '~/interface/config';
+import type {
+  IColumnsService,
+  ReusableParams,
+} from '~/services/columns.service.type';
+import { parseMetaProp } from '~/utils/modelUtils';
 import {
   BaseUser,
   CalendarRange,
@@ -79,6 +83,9 @@ import {
   convertValueToAIRecordType,
 } from '~/utils/dataConversion';
 import { extractProps } from '~/helpers/extractProps';
+import { IFormulaColumnTypeChanger } from '~/services/formula-column-type-changer.types';
+
+export type { ReusableParams } from '~/services/columns.service.type';
 
 const deepClone = rfdc();
 
@@ -87,16 +94,6 @@ export enum Altered {
   NEW_COLUMN = 1,
   DELETE_COLUMN = 4,
   UPDATE_COLUMN = 8,
-}
-
-export interface ReusableParams {
-  table?: Model;
-  source?: Source;
-  base?: Base;
-  dbDriver?: CustomKnex;
-  sqlClient?: SqlClient;
-  sqlMgr?: SqlMgrv2;
-  baseModel?: BaseModelSqlv2;
 }
 
 async function reuseOrSave(
@@ -187,10 +184,12 @@ async function getJunctionTableName(
 }
 
 @Injectable()
-export class ColumnsService {
+export class ColumnsService implements IColumnsService {
   constructor(
     protected readonly metaService: MetaService,
     protected readonly appHooksService: AppHooksService,
+    @Inject(forwardRef(() => 'FormulaColumnTypeChanger'))
+    protected readonly formulaColumnTypeChanger: IFormulaColumnTypeChanger,
   ) {}
 
   async updateFormulas(
@@ -293,13 +292,12 @@ export class ColumnsService {
       reuse?: ReusableParams;
       apiVersion?: NcApiVersion;
     },
-  ) {
+  ): Promise<Model | Column<any>> {
     const reuse = param.reuse || {};
 
     const { req } = param;
 
     const column = await Column.get(context, { colId: param.columnId });
-
     const oldColumn = deepClone(column);
 
     const table = await reuseOrSave('table', reuse, async () =>
@@ -444,7 +442,39 @@ export class ColumnsService {
         `Duplicate column alias for table ${table.title} and column is ${param.column.title}. Please change the name of this column and retry.`,
       );
     }
+    const sqlUi = SqlUiFactory.create(await source.getConnectionConfig());
 
+    // for API call, if dt is not supplied
+    // but uidt is present
+    // and uidt is different, try to get dt from uidt
+    if (
+      param.column.uidt &&
+      param.column.uidt !== column.uidt &&
+      !(param.column as Column).dt &&
+      // if uidt is invalid, do not try to set default dt
+      Object.values(UITypes).includes(param.column.uidt as UITypes)
+    ) {
+      (param.column as Column).dt = sqlUi.getDataTypeForUiType(
+        { uidt: param.column.uidt as UITypes },
+        column?.['meta']?.['ag'] ? 'AG' : 'AI',
+      )?.dt;
+    }
+    // for API call, if dt is supplied, try to check if it's valid, otherwise set default
+    else if (
+      param.column.uidt &&
+      param.column.uidt !== column.uidt &&
+      (param.column as Column).dt &&
+      // if uidt is invalid, do not try to set default dt
+      Object.values(UITypes).includes(param.column.uidt as UITypes)
+    ) {
+      const dtList = sqlUi.getDataTypeListForUiType(param.column as Column);
+      if (!dtList.includes((param.column as Column).dt)) {
+        (param.column as Column).dt = sqlUi.getDataTypeForUiType(
+          { uidt: param.column.uidt as UITypes },
+          column?.['meta']?.['ag'] ? 'AG' : 'AI',
+        )?.dt;
+      }
+    }
     // extract missing required props from column to avoid broken column
     param.column = {
       ...extractProps(column, ['column_name', 'uidt', 'dt']),
@@ -463,6 +493,7 @@ export class ColumnsService {
       prompt_raw?: string;
       fk_integration_id?: string;
     } & Partial<Pick<ColumnReqType, 'column_order'>>;
+    sqlUi.adjustLengthAndScale(colBody);
 
     if (
       isMetaOnlyUpdateAllowed ||
@@ -667,6 +698,7 @@ export class ColumnsService {
                 },
               });
             }
+            await View.clearSingleQueryCache(context, column.fk_model_id, null);
 
             // check alias value present in colBody
             if (
@@ -714,6 +746,18 @@ export class ColumnsService {
         }
 
         await this.updateRollupOrLookup(context, colBody, column);
+      } else if ([UITypes.Formula].includes(column.uidt)) {
+        (param.column as any).id = undefined;
+        await this.formulaColumnTypeChanger.startChangeFormulaColumnType(
+          context,
+          {
+            req,
+            formulaColumn: column,
+            newColumnRequest: param.column,
+            user: param.user,
+            reuse: param.reuse,
+          },
+        );
       } else {
         NcError.notImplemented(`Updating ${column.uidt} => ${colBody.uidt}`);
       }
@@ -762,6 +806,20 @@ export class ColumnsService {
           NcConnectionMgrv2.get(source),
         );
         const driverType = dbDriver.clientType();
+
+        if (
+          column.uidt === UITypes.SingleSelect &&
+          colBody.uidt !== UITypes.SingleSelect
+        ) {
+          if (
+            (await KanbanView.getViewsByGroupingColId(context, column.id))
+              .length > 0
+          ) {
+            NcError.badRequest(
+              `The column '${column.column_name}' is being used in Kanban View.`,
+            );
+          }
+        }
 
         if (
           column.uidt === UITypes.MultiSelect &&
@@ -1735,7 +1793,6 @@ export class ColumnsService {
     if (param.apiVersion === NcApiVersion.V3) {
       return column;
     }
-
     return table;
   }
 
@@ -3551,11 +3608,13 @@ export class ColumnsService {
           param.source.type === 'pg' ||
           (param.column as LinkToAnotherColumnReqType).virtual
         ) {
+          const indexName = generateFkName(parent, child);
           await this.createColumnIndex(context, {
             column: new Column({
               ...newColumn,
               fk_model_id: child.id,
             }),
+            indexName,
             source: param.source,
             sqlMgr,
           });
@@ -3652,11 +3711,13 @@ export class ColumnsService {
           param.source.type === 'pg' ||
           (param.column as LinkToAnotherColumnReqType).virtual
         ) {
+          const indexName = generateFkName(parent, child);
           await this.createColumnIndex(context, {
             column: new Column({
               ...newColumn,
               fk_model_id: child.id,
             }),
+            indexName,
             source: param.source,
             sqlMgr,
           });
