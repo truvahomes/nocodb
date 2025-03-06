@@ -1866,7 +1866,9 @@
       "yourCurrentRoleIs": "Your current role is",
       "pleaseRequestAccessForView": "Please request for higher permission from the Admin / Base owner / Workspace owner to get access to this {viewName}",
       "preventHideAllOptions": "You cannot hide all options if field is required",
-      "valueMustBeAtMostCharLong": "Value must be at most {length} characters long"
+      "valueMustBeAtMostCharLong": "Value must be at most {length} characters long",
+      "insertNotAllowed": "Insert is not allowed for this field",
+      "updateNotAllowed": "Update is not allowed for this field"
     },
     "error": {
       "manualTriggerHook": "Manual hooks can't be disabled",

@@ -953,7 +953,7 @@ async function handleMouseUp(e: MouseEvent) {
     x < totalColumnsWidth.value - scrollLeft.value
   ) {
     if (isAddingEmptyRowAllowed.value) {
-      await addEmptyRow()
+      await onNewRecordToFormClick()
     }
     selection.value.clear()
     activeCell.value.row = rowIndex
@@ -1912,7 +1912,7 @@ defineExpose({
     </template>
     <div class="absolute bottom-12 z-5 left-2" @click.stop>
       <NcDropdown v-if="isAddingEmptyRowAllowed">
-        <div class="flex shadow-nc-sm rounded-lg">
+        <div class="flex shadow-nc-sm rounded">
           <NcButton
             v-if="isMobileMode"
             v-e="[isAddNewRecordGridMode ? 'c:row:add:grid' : 'c:row:add:form']"
@@ -1930,7 +1930,7 @@ defineExpose({
           <NcButton
             v-else
             v-e="[isAddNewRecordGridMode ? 'c:row:add:grid' : 'c:row:add:form']"
-            class="!rounded-r-none !border-r-0 nc-grid-add-new-row"
+            class="nc-grid-add-new-row"
             size="small"
             type="secondary"
             :shadow="false"
@@ -1941,10 +1941,10 @@ defineExpose({
               <template v-if="isAddNewRecordGridMode">
                 {{ $t('activity.newRecord') }}
               </template>
-              <template v-else> {{ $t('activity.newRecord') }} - {{ $t('objects.viewType.form') }}</template>
+              <template v-else> {{ $t('activity.newRecord') }}</template>
             </div>
           </NcButton>
-          <NcButton
+          <!-- <NcButton
             v-if="!isMobileMode"
             size="small"
             class="!rounded-l-none nc-add-record-more-info"
@@ -1952,10 +1952,10 @@ defineExpose({
             :shadow="false"
           >
             <GeneralIcon icon="arrowUp" />
-          </NcButton>
+          </NcButton> -->
         </div>
 
-        <template #overlay>
+        <!-- <template #overlay>
           <NcMenu variant="small">
             <NcMenuItem v-e="['c:row:add:grid']" class="nc-new-record-with-grid group" @click="onNewRecordToGridClick">
               <div class="flex flex-row items-center justify-start gap-x-3">
@@ -1974,7 +1974,7 @@ defineExpose({
               <GeneralIcon v-if="!isAddNewRecordGridMode" icon="check" class="w-4 h-4 text-primary" />
             </NcMenuItem>
           </NcMenu>
-        </template>
+        </template> -->
       </NcDropdown>
     </div>
   </div>

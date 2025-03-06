@@ -1,4 +1,4 @@
-import { UITypes, isAIPromptCol, isLinksOrLTAR, isOrderCol, isSystemColumn, isVirtualCol } from 'nocodb-sdk'
+import { UITypes, isAIPromptCol, isLinksOrLTAR, isOrderCol, isSystemColumn, isVirtualCol, isActionDisabled, DisabledActionsType } from 'nocodb-sdk'
 import type { ButtonType, ColumnType, TableType, UserType, ViewType } from 'nocodb-sdk'
 import type { WritableComputedRef } from '@vue/reactivity'
 import { SpriteLoader } from '../loaders/SpriteLoader'
@@ -981,6 +981,11 @@ export function useCanvasTable({
 
     if (column.readonly) {
       message.info(t('msg.info.fieldReadonly'))
+      return null
+    }
+
+    if (isActionDisabled(column.disabled_actions || '', DisabledActionsType.UPDATE)) {
+      message.info(t('msg.info.updateNotAllowed'))
       return null
     }
 

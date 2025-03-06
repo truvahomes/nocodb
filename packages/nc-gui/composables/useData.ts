@@ -526,25 +526,32 @@ export function useData(args: {
       throw new Error("Delete not allowed for table which doesn't have primary Key")
     }
 
-    const res: any = await $api.dbViewRow.delete(
-      'noco',
-      base.value.id as string,
-      metaValue?.id as string,
-      viewMetaValue?.id as string,
-      encodeURIComponent(id),
-    )
-
-    await reloadAggregate?.trigger()
-
-    if (res.message) {
-      message.info(
-        `Record delete failed: ${`Unable to delete record with ID ${id} because of the following:
-              \n${res.message.join('\n')}.\n
-              Clear the data first & try again`})}`,
+    try {
+      const res: any = await $api.dbViewRow.delete(
+        'noco',
+        base.value.id as string,
+        metaValue?.id as string,
+        viewMetaValue?.id as string,
+        encodeURIComponent(id),
       )
+
+      await reloadAggregate?.trigger()
+
+      if (res.message) {
+        message.info(
+          `Record delete failed: ${`Unable to delete record with ID ${id} because of the following:
+                \n${res.message.join('\n')}.\n
+                Clear the data first & try again`})}`,
+        )
+        await callbacks?.loadData?.()
+        return false
+      }
+      return true
+    } catch (e: any) {
+      message.error(`${t('msg.error.deleteRowFailed')}: ${await extractSdkResponseErrorMsg(e)}`)
+      await callbacks?.loadData?.()
       return false
     }
-    return true
   }
 
   async function deleteRow(rowIndex: number, undo?: boolean) {
@@ -670,6 +677,7 @@ export function useData(args: {
 
       await bulkDeleteRows(removedRowsData.map((row) => row.pkData))
     } catch (e: any) {
+      await callbacks?.loadData?.()
       return message.error(`${t('msg.error.deleteRowFailed')}: ${await extractSdkResponseErrorMsg(e)}`)
     }
 
@@ -778,6 +786,7 @@ export function useData(args: {
           }
         }
       } catch (e: any) {
+        await callbacks?.loadData?.()
         return message.error(`${t('msg.error.deleteRowFailed')}: ${await extractSdkResponseErrorMsg(e)}`)
       }
 
@@ -804,6 +813,7 @@ export function useData(args: {
 
       await bulkDeleteRows(removedRowsData.map((row) => row.pkData))
     } catch (e: any) {
+      await callbacks?.loadData?.()
       return message.error(`${t('msg.error.deleteRowFailed')}: ${await extractSdkResponseErrorMsg(e)}`)
     }
 
@@ -892,6 +902,7 @@ export function useData(args: {
 
       return rows.length === 1 && bulkDeletedRowsData ? [bulkDeletedRowsData] : bulkDeletedRowsData
     } catch (error: any) {
+      await callbacks?.loadData?.()
       message.error(await extractSdkResponseErrorMsg(error))
     }
   }

@@ -13,6 +13,8 @@ import {
   isOrderCol,
   isSystemColumn,
   isVirtualCol,
+  isActionDisabled,
+  DisabledActionsType,
 } from 'nocodb-sdk'
 
 import axios from 'axios'
@@ -599,6 +601,11 @@ function makeEditable(row: Row, col: ColumnType) {
     // Editing primary key not supported
     message.info(t('msg.info.editingPKnotSupported'))
     return
+  }
+
+  if (isActionDisabled(col.disabled_actions || '', DisabledActionsType.UPDATE)) {
+      message.info(t('msg.info.updateNotAllowed'))
+      return
   }
 
   if ([UITypes.SingleSelect, UITypes.MultiSelect].includes(col.uidt as UITypes)) {

@@ -62,10 +62,12 @@ export function useGlobalState(storageKey = 'nocodb-gui-v2'): State {
       old: INITIAL_LEFT_SIDEBAR_WIDTH,
       current: INITIAL_LEFT_SIDEBAR_WIDTH,
     },
-    isAddNewRecordGridMode: true,
     syncDataUpvotes: [],
     giftBannerDismissedCount: 0,
   }
+
+  // Add computed property that always returns false
+  const isAddNewRecordGridMode = computed(() => false)
 
   /** saves a reactive state, any change to these values will write/delete to localStorage */
   const storage = useStorage<StoredState>(storageKey, initialState, localStorage, { mergeDefaults: true })
@@ -136,5 +138,6 @@ export function useGlobalState(storageKey = 'nocodb-gui-v2'): State {
     error,
     user,
     appInfo,
+    isAddNewRecordGridMode,
   }
 }

@@ -115,7 +115,8 @@ function expandForm(row: Row, state?: Record<string, any>, fromToolbar = false) 
   } else {
     expandedFormRow.value = row
     expandedFormDlg.value = true
-    skipRowRemovalOnCancel.value = !fromToolbar
+    // skipRowRemovalOnCancel.value = !fromToolbar
+    skipRowRemovalOnCancel.value = false
   }
 }
 

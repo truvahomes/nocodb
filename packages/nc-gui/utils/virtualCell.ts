@@ -1,4 +1,4 @@
-import { type ColumnType, type LinkToAnotherRecordType, isVirtualCol } from 'nocodb-sdk'
+import { type ColumnType, type LinkToAnotherRecordType, isVirtualCol, DisabledActionsType, isActionDisabled } from 'nocodb-sdk'
 import {
   RelationTypes,
   UITypes,
@@ -57,4 +57,12 @@ export const isReadonly = (col: ColumnType) => {
     isCreatedOrLastModifiedTimeCol(col) ||
     isCreatedOrLastModifiedByCol(col)
   )
+}
+
+export const isUpdateDisabled = (col: ColumnType): boolean => {
+  return isActionDisabled(col.disabled_actions || '', DisabledActionsType.UPDATE)
+}
+
+export const isInsertDisabled = (col: ColumnType): boolean => {
+  return isActionDisabled(col.disabled_actions || '', DisabledActionsType.INSERT)
 }

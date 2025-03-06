@@ -2,7 +2,7 @@
 import axios from 'axios'
 import { nextTick } from '@vue/runtime-core'
 import type { ButtonType, ColumnReqType, ColumnType, PaginatedType, TableType, ViewType } from 'nocodb-sdk'
-import { UITypes, ViewTypes, isAIPromptCol, isLinksOrLTAR, isSystemColumn, isVirtualCol } from 'nocodb-sdk'
+import { UITypes, ViewTypes, isAIPromptCol, isLinksOrLTAR, isSystemColumn, isVirtualCol, isActionDisabled, DisabledActionsType } from 'nocodb-sdk'
 import { useColumnDrag } from './useColumnDrag'
 import { type CellRange, type Group, NavigateDir } from '#imports'
 
@@ -386,6 +386,11 @@ function makeEditable(row: Row, col: ColumnType) {
   if (col.pk && !row.rowMeta.new) {
     // Editing primary key not supported
     message.info(t('msg.info.editingPKnotSupported'))
+    return
+  }
+
+  if (isActionDisabled(col.disabled_actions || '', DisabledActionsType.UPDATE)) {
+    message.info(t('msg.info.updateNotAllowed'))
     return
   }
 
@@ -2613,7 +2618,7 @@ onKeyStroke('ArrowDown', onDown)
         <template v-if="isAddingEmptyRowAllowed && !showSkeleton" #add-record>
           <div class="flex ml-1">
             <NcButton
-              v-if="isMobileMode"
+              size="small"
               v-e="[isAddNewRecordGridMode ? 'c:row:add:grid' : 'c:row:add:form']"
               class="nc-grid-add-new-row"
               type="secondary"
@@ -2622,74 +2627,6 @@ onKeyStroke('ArrowDown', onDown)
             >
               {{ $t('activity.newRecord') }}
             </NcButton>
-            <a-dropdown-button
-              v-else
-              v-e="[isAddNewRecordGridMode ? 'c:row:add:grid:toggle' : 'c:row:add:form:toggle']"
-              class="nc-grid-add-new-row"
-              placement="top"
-              :disabled="isPaginationLoading"
-              @click.stop="isAddNewRecordGridMode ? addEmptyRow() : onNewRecordToFormClick()"
-            >
-              <div data-testid="nc-pagination-add-record" class="flex items-center px-2 text-gray-600 hover:text-black">
-                <span>
-                  <template v-if="isAddNewRecordGridMode">
-                    {{ $t('activity.newRecord') }}
-                  </template>
-                  <template v-else> {{ $t('activity.newRecord') }} - {{ $t('objects.viewType.form') }} </template>
-                </span>
-              </div>
-
-              <template #overlay>
-                <div class="relative overflow-visible min-h-17 w-10">
-                  <div
-                    class="absolute -top-21 flex flex-col min-h-34.5 w-70 p-1.5 bg-white rounded-lg border-1 border-gray-200 justify-start overflow-hidden"
-                    style="box-shadow: 0px 4px 6px -2px rgba(0, 0, 0, 0.06), 0px -12px 16px -4px rgba(0, 0, 0, 0.1)"
-                    :class="{
-                      '-left-32.5': !isAddNewRecordGridMode,
-                      '-left-21.5': isAddNewRecordGridMode,
-                    }"
-                  >
-                    <div
-                      v-e="['c:row:add:grid']"
-                      class="px-4 py-3 flex flex-col select-none gap-y-2 cursor-pointer rounded-md hover:bg-gray-100 text-gray-600 nc-new-record-with-grid group"
-                      @click="onNewRecordToGridClick"
-                    >
-                      <div class="flex flex-row items-center justify-between w-full">
-                        <div class="flex flex-row items-center justify-start gap-x-2.5">
-                          <component :is="viewIcons[ViewTypes.GRID]?.icon" class="nc-view-icon text-inherit" />
-                          {{ $t('activity.newRecord') }} - {{ $t('objects.viewType.grid') }}
-                        </div>
-
-                        <GeneralIcon v-if="isAddNewRecordGridMode" icon="check" class="w-4 h-4 text-primary" />
-                      </div>
-                      <div class="flex flex-row text-xs text-gray-400 ml-6.5">
-                        {{ $t('labels.addRowGrid') }}
-                      </div>
-                    </div>
-                    <div
-                      v-e="['c:row:add:form']"
-                      class="px-4 py-3 flex flex-col select-none gap-y-2 cursor-pointer rounded-md hover:bg-gray-100 text-gray-600 nc-new-record-with-form group"
-                      @click="onNewRecordToFormClick"
-                    >
-                      <div class="flex flex-row items-center justify-between w-full">
-                        <div class="flex flex-row items-center justify-start gap-x-2.5">
-                          <component :is="viewIcons[ViewTypes.FORM]?.icon" class="nc-view-icon text-inherit" />
-                          {{ $t('activity.newRecord') }} - {{ $t('objects.viewType.form') }}
-                        </div>
-
-                        <GeneralIcon v-if="!isAddNewRecordGridMode" icon="check" class="w-4 h-4 text-primary" />
-                      </div>
-                      <div class="flex flex-row text-xs text-gray-400 ml-6.5">
-                        {{ $t('labels.addRowForm') }}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </template>
-              <template #icon>
-                <component :is="iconMap.arrowUp" class="text-gray-600 h-4 w-4" />
-              </template>
-            </a-dropdown-button>
           </div>
         </template>
       </LazySmartsheetPagination>
@@ -2734,7 +2671,7 @@ onKeyStroke('ArrowDown', onDown)
               <template v-if="isAddNewRecordGridMode">
                 {{ $t('activity.newRecord') }}
               </template>
-              <template v-else> {{ $t('activity.newRecord') }} - {{ $t('objects.viewType.form') }} </template>
+              <template> {{ $t('activity.newRecord') }} - {{ $t('objects.viewType.form') }} </template>
             </div>
           </NcButton>
           <NcButton
