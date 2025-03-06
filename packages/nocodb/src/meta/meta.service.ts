@@ -9,6 +9,7 @@ import type { Knex } from 'knex';
 import type { Condition } from '~/db/CustomKnex';
 import XcMigrationSource from '~/meta/migrations/XcMigrationSource';
 import XcMigrationSourcev2 from '~/meta/migrations/XcMigrationSourcev2';
+import XcMigrationSourceTruva from '~/meta/migrations/XcMigrationSourceTruva';
 import { XKnex } from '~/db/CustomKnex';
 import { NcConfig } from '~/utils/nc-config';
 import { MetaTable, RootScopes, RootScopeTables } from '~/utils/globals';
@@ -827,6 +828,10 @@ export class MetaService {
     await this.connection.migrate.latest({
       migrationSource: new XcMigrationSourcev2(),
       tableName: 'xc_knex_migrationsv2',
+    });
+    await this.connection.migrate.latest({
+      migrationSource: new XcMigrationSourceTruva(),
+      tableName: 'xc_knex_migrations_truva',
     });
     return true;
   }

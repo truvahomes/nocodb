@@ -1597,6 +1597,15 @@ export interface IntegrationReqType {
 export type BoolType = number | boolean | null;
 
 /**
+ * Model for Disabled Actions
+ */
+export enum DisabledActionsType {
+  INSERT = 'INSERT',
+  UPDATE = 'UPDATE',
+  DELETE = 'DELETE',
+}
+
+/**
  * Model for Column
  */
 export interface ColumnType {
@@ -1745,6 +1754,11 @@ export interface ColumnType {
   visible?: BoolType;
   /** Is this column readonly? */
   readonly?: BoolType;
+  /**
+   * Is Action Disabled?
+   * @example INSERT,UPDATE,DELETE
+   */
+  disabled_actions?: string;
 }
 
 /**
@@ -2280,6 +2294,8 @@ export interface FormulaType {
   formula_raw?: string;
   /** Unique ID */
   id?: IdType;
+  /** Parsed Formula Tree */
+  parsed_tree?: any;
 }
 
 /**
@@ -3906,6 +3922,11 @@ export interface TableType {
   type?: string;
   /** Is this table synced? */
   synced?: BoolType;
+  /**
+   * Is Action Disabled?
+   * @example INSERT,UPDATE,DELETE
+   */
+  disabled_actions?: string;
 }
 
 /**

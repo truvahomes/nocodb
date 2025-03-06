@@ -25,6 +25,8 @@ import {
   ncIsObject,
   RelationTypes,
   UITypes,
+  isActionDisabled,
+  DisabledActionsType,
 } from 'nocodb-sdk';
 import Validator from 'validator';
 import { customAlphabet } from 'nanoid';
@@ -135,6 +137,9 @@ const JSON_COLUMN_TYPES = [UITypes.Button];
 const ORDER_STEP_INCREMENT = 1;
 
 const MAX_RECURSION_DEPTH = 2;
+
+const ENTITY_TYPE_COLUMN = "column"
+const ENTITY_TYPE_MODEL = "table"
 
 export async function populatePk(
   context: NcContext,
@@ -4690,6 +4695,9 @@ class BaseModelSqlv2 implements IBaseModelSqlV2 {
 
   async insert(data, request: NcRequest, trx?, _disableOptimization = false) {
     try {
+      // validate if insert is disabled
+      await this.validateDisabledActions(this.model, DisabledActionsType.INSERT);
+
       const columns = await this.model.getColumns(this.context);
 
       // exclude auto increment columns in body
@@ -4715,7 +4723,7 @@ class BaseModelSqlv2 implements IBaseModelSqlV2 {
         columns,
       );
 
-      await this.validate(insertObj, columns);
+      await this.validate(insertObj, columns, { performedAction: DisabledActionsType.INSERT });
 
       if ('beforeInsert' in this) {
         await this.beforeInsert(insertObj, trx, request);
@@ -4827,6 +4835,9 @@ class BaseModelSqlv2 implements IBaseModelSqlV2 {
   async delByPk(id, _trx?, cookie?) {
     let trx: Knex.Transaction = _trx;
     try {
+      // validate if delete is disabled
+      await this.validateDisabledActions(this.model, DisabledActionsType.DELETE);
+
       const source = await this.getSource();
       // retrieve data for handling params in hook
       const data = await this.readRecord({
@@ -5010,6 +5021,9 @@ class BaseModelSqlv2 implements IBaseModelSqlV2 {
 
   async updateByPk(id, data, trx?, cookie?, _disableOptimization = false) {
     try {
+      // validate if update is disabled
+      await this.validateDisabledActions(this.model, DisabledActionsType.UPDATE);
+
       const columns = await this.model.getColumns(this.context);
 
       const updateObj = await this.model.mapAliasToColumn(
@@ -5020,7 +5034,7 @@ class BaseModelSqlv2 implements IBaseModelSqlV2 {
         columns,
       );
 
-      await this.validate(data, columns);
+      await this.validate(data, columns, { performedAction: DisabledActionsType.UPDATE });
 
       await this.beforeUpdate(data, trx, cookie);
 
@@ -5193,6 +5207,9 @@ class BaseModelSqlv2 implements IBaseModelSqlV2 {
   async nestedInsert(data, request: NcRequest, _trx = null, param?) {
     // const driver = trx ? trx : await this.dbDriver.transaction();
     try {
+      // validate if insert is disabled
+      await this.validateDisabledActions(this.model, DisabledActionsType.INSERT);
+
       const source = await this.getSource();
       await populatePk(this.context, this.model, data);
 
@@ -5216,7 +5233,7 @@ class BaseModelSqlv2 implements IBaseModelSqlV2 {
           req: request,
         });
 
-      await this.validate(insertObj, columns);
+      await this.validate(insertObj, columns, { performedAction: DisabledActionsType.INSERT });
 
       await this.beforeInsert(insertObj, this.dbDriver, request);
 
@@ -5732,6 +5749,10 @@ class BaseModelSqlv2 implements IBaseModelSqlV2 {
   ) {
     let trx;
     try {
+      // validate if bulk upsert is disabled
+      await this.validateDisabledActions(this.model, DisabledActionsType.INSERT);
+      await this.validateDisabledActions(this.model, DisabledActionsType.UPDATE);
+
       const columns = await this.model.getColumns(this.context);
 
       let order = await this.getHighestOrderInTable();
@@ -5806,6 +5827,14 @@ class BaseModelSqlv2 implements IBaseModelSqlV2 {
       trx = await this.dbDriver.transaction();
 
       const updatedPks = [];
+
+      for (const data of toUpdate) {
+        await this.validate(data, columns, { performedAction: DisabledActionsType.UPDATE });
+      }
+
+      for (const data of toInsert) {
+        await this.validate(data, columns, { performedAction: DisabledActionsType.INSERT });
+      }
 
       if (toUpdate.length > 0) {
         for (const data of toUpdate) {
@@ -6172,6 +6201,10 @@ class BaseModelSqlv2 implements IBaseModelSqlV2 {
       let preInsertOps: (() => Promise<string>)[] = [];
       let aiPkCol: Column;
       let agPkCol: Column;
+
+      // validate if bulk insert is disabled
+      await this.validateDisabledActions(this.model, DisabledActionsType.INSERT);
+
       if (!raw) {
         const columns = await this.model.getColumns(this.context);
 
@@ -6362,12 +6395,15 @@ class BaseModelSqlv2 implements IBaseModelSqlV2 {
   ) {
     let transaction;
     try {
+      // validate if bulk update is disabled
+      await this.validateDisabledActions(this.model, DisabledActionsType.UPDATE);
+
       const columns = await this.model.getColumns(this.context);
 
       // validate update data
       if (!raw) {
         for (const d of datas) {
-          await this.validate(d, columns, { allowSystemColumn });
+          await this.validate(d, columns, { allowSystemColumn, performedAction: DisabledActionsType.UPDATE });
         }
       }
 
@@ -6630,6 +6666,9 @@ class BaseModelSqlv2 implements IBaseModelSqlV2 {
     { cookie }: { cookie: NcRequest },
   ) {
     try {
+      // validate if bulk update is disabled
+      await this.validateDisabledActions(this.model, DisabledActionsType.UPDATE);
+
       let count = 0;
 
       const columns = await this.model.getColumns(this.context);
@@ -6642,7 +6681,7 @@ class BaseModelSqlv2 implements IBaseModelSqlV2 {
         columns,
       );
       if (!args.skipValidationAndHooks)
-        await this.validate(updateData, columns);
+        await this.validate(updateData, columns, { performedAction: DisabledActionsType.UPDATE });
 
       // if attachment provided error out
       for (const col of columns) {
@@ -6738,6 +6777,9 @@ class BaseModelSqlv2 implements IBaseModelSqlV2 {
       isSingleRecordDeletion?: boolean;
     } = {},
   ) {
+    // validate if bulk delete is disabled
+    await this.validateDisabledActions(this.model, DisabledActionsType.DELETE);
+
     const columns = await this.model.getColumns(this.context);
 
     let transaction;
@@ -6911,6 +6953,9 @@ class BaseModelSqlv2 implements IBaseModelSqlV2 {
     args: { where?: string; filterArr?: Filter[]; viewId?: string } = {},
     { cookie }: { cookie: NcRequest },
   ) {
+    // validate if bulk delete is disabled
+    await this.validateDisabledActions(this.model, DisabledActionsType.DELETE);
+
     let trx: Knex.Transaction;
     try {
       const columns = await this.model.getColumns(this.context);
@@ -7657,7 +7702,8 @@ class BaseModelSqlv2 implements IBaseModelSqlV2 {
     {
       typecast,
       allowSystemColumn,
-    }: { typecast?: boolean; allowSystemColumn?: boolean } = {
+      performedAction,
+    }: { typecast?: boolean; allowSystemColumn?: boolean; performedAction?: DisabledActionsType } = {
       typecast: false,
       allowSystemColumn: false,
     },
@@ -7668,6 +7714,8 @@ class BaseModelSqlv2 implements IBaseModelSqlV2 {
       const column = this.model.columns[i];
 
       if (column.title in data) {
+        await this.validateDisabledActions(column, performedAction);
+
         if (
           isCreatedOrLastModifiedTimeCol(column) ||
           isCreatedOrLastModifiedByCol(column)
@@ -7847,6 +7895,19 @@ class BaseModelSqlv2 implements IBaseModelSqlV2 {
         validOptions: options,
         options: notExistedOptions,
       });
+    }
+  }
+
+  async validateDisabledActions(entity: Column | Model, action: DisabledActionsType) {
+    let entityType;
+    if (entity instanceof Column) {
+      entityType = ENTITY_TYPE_COLUMN;
+    }
+    if (entity instanceof Model) {
+      entityType = ENTITY_TYPE_MODEL;
+    }
+    if (isActionDisabled(entity.disabled_actions, action)) {
+      NcError.disabledAction(action, entityType, entity.title);
     }
   }
 

@@ -1,7 +1,7 @@
 import UITypes, { isNumericCol } from './UITypes';
 import { RolesObj, RolesType } from './globals';
 import { ClientType } from './enums';
-import { ColumnType, FormulaType, IntegrationsType } from './Api';
+import { ColumnType, DisabledActionsType, FormulaType, IntegrationsType } from './Api';
 import { FormulaDataTypes } from './formulaHelpers';
 
 // import {RelationTypes} from "./globals";
@@ -236,6 +236,12 @@ function roundUpToPrecision(number: number, precision: number = 0) {
   return Math.round(number).toFixed(precision);
 }
 
+const isActionDisabled = (disabledActions: string, action: DisabledActionsType) => {
+  if (!disabledActions || !action) return false;
+  const disabledActionsArray = disabledActions.split(',');
+  return disabledActionsArray.includes(action);
+};
+
 export {
   filterOutSystemColumns,
   getSystemColumnsIds,
@@ -251,6 +257,7 @@ export {
   getRenderAsTextFunForUiType,
   populateUniqueFileName,
   roundUpToPrecision,
+  isActionDisabled,
 };
 
 const testDataBaseNames = {

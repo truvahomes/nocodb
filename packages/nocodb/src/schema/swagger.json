@@ -20966,6 +20966,20 @@
           "id": "y0m76u8t9x2tn"
         }
       },
+      "DisabledActions": {
+        "description": "Model for Disabled Actions",
+        "examples": [
+          "INSERT",
+          "UPDATE", 
+          "DELETE"
+        ],
+        "type": "string",
+        "enum": [
+          "INSERT",
+          "UPDATE",
+          "DELETE"
+        ]
+      },
       "Column": {
         "description": "Model for Column",
         "examples": [
@@ -21262,6 +21276,11 @@
           "readonly": {
             "$ref": "#/components/schemas/Bool",
             "description": "Is this column readonly?"
+          },
+          "disabled_actions": {
+            "description": "Is Action Disabled?",
+            "type": "string",
+            "example": "INSERT,UPDATE,DELETE"
           }
         },
         "x-stoplight": {
@@ -27044,6 +27063,11 @@
           "synced": {
             "$ref": "#/components/schemas/Bool",
             "description": "Is this table synced?"
+          },
+          "disabled_actions": {
+            "description": "Is Action Disabled?",
+            "type": "string",
+            "example": "INSERT,UPDATE,DELETE"
           }
         },
         "required": [

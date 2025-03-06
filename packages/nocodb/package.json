@@ -34,7 +34,7 @@
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r @swc-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
-    "watch:run": "cross-env NODE_ENV=development NC_DISABLE_TELE=true rspack serve --config rspack.dev.config.js --entry src/run/docker",
+    "watch:run": "cross-env NODE_ENV=development NC_DISABLE_CACHE=true NC_DISABLE_TELE=true rspack serve --config rspack.dev.config.js --entry src/run/docker",
     "watch:run:mysql": "cross-env NODE_ENV=development NC_DISABLE_TELE=true rspack serve --config rspack.dev.config.js --entry src/run/dockerRunMysql",
     "watch:run:pg": "cross-env NODE_ENV=development NC_DISABLE_TELE=true rspack serve --config rspack.dev.config.js --entry src/run/dockerRunPG",
     "watch:run:playwright": "rm -f ./test_*.db; cross-env DB_TYPE=sqlite DATABASE_URL=sqlite:./test_noco.db PLAYWRIGHT_TEST=true NODE_ENV=test NC_DISABLE_TELE=true  NC_SNAPSHOT_WINDOW_SEC=3 rspack serve --config rspack.dev.config.js --entry src/run/testDocker",

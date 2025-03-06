@@ -116,6 +116,8 @@ export default class Column<T = any> implements ColumnType {
 
   public readonly?: boolean;
 
+  public disabled_actions?: string;
+
   constructor(data: Partial<(ColumnType & { asId?: string }) | Column>) {
     Object.assign(this, data);
   }

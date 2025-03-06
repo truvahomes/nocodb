@@ -1,7 +1,7 @@
 import { NcErrorType } from 'nocodb-sdk';
 import { Logger } from '@nestjs/common';
 import { generateReadablePermissionErr } from 'src/utils/acl';
-import type { BaseType, SourceType } from 'nocodb-sdk';
+import type { BaseType, DisabledActionsType, SourceType } from 'nocodb-sdk';
 import type { ErrorObject } from 'ajv';
 import { defaultLimitConfig } from '~/helpers/extractLimitAndOffset';
 
@@ -725,6 +725,10 @@ const errorHelpers: {
     message: 'Cannot calculate intermediate order',
     code: 400,
   },
+  [NcErrorType.DISABLED_ACTION]: {
+    message: (action: DisabledActionsType, entityType: string, entityName: string) => `Action '${action}' is disabled for ${entityType} '${entityName}'`,
+    code: 400,
+  },
 };
 
 function generateError(
@@ -1115,5 +1119,11 @@ export class NcError {
     validOptions: string[];
   }) {
     throw new OptionsNotExistsError(props);
+  }
+
+  static disabledAction(action: DisabledActionsType, entityType: string, entityName: string) {
+    throw new NcBaseErrorv2(NcErrorType.DISABLED_ACTION, {
+      params: [action, entityType, entityName],
+    });
   }
 }

@@ -74,6 +74,8 @@ export default class Model implements TableType {
 
   synced?: boolean;
 
+  disabled_actions?: string;
+
   constructor(data: Partial<TableType | Model>) {
     Object.assign(this, data);
   }
