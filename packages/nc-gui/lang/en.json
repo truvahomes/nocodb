@@ -1412,7 +1412,11 @@
     "goToDocs": "Go to Docs",
     "addCondition": "Add condition",
     "addConditionGroup": "Add condition group",
-    "pending": "Pending"
+    "pending": "Pending",
+    "deleteSelectedRowDisabled": "Disabled",
+    "deleteAllRecordsDisabled": "Disabled",
+    "deleteRowDisabled": "Disabled",
+    "deleteRowsDisabled": "Disabled"
   },
   "tooltip": {
     "leaveWorkspace": "Each workspace must have at least one owner. Please assign another user as the Owner before leaving the workspace. If you are the last member, consider deleting the workspace instead.",

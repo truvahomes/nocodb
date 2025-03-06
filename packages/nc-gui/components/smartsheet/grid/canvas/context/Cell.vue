@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { type TableType, type ViewType, isAIPromptCol, isLinksOrLTAR } from 'nocodb-sdk'
+import { type TableType, type ViewType, isAIPromptCol, isLinksOrLTAR, isActionDisabled, DisabledActionsType } from 'nocodb-sdk'
 import type { CellRange } from '../../../../../composables/useMultiSelect/cellRange'
 import type { ActionManager } from '../loaders/ActionManager'
 const props = defineProps<{
@@ -7,6 +7,7 @@ const props = defineProps<{
   contextMenuTarget: { row: number; col: number } | null
   totalRows: number
   selection: CellRange
+  meta: TableType
   columns: CanvasGridColumn[]
   cachedRows: Map<number, Row>
   activeCell: { row: number; column: number }
@@ -194,14 +195,25 @@ const generateAIBulk = async () => {
         class="nc-base-menu-item !text-red-600 !hover:bg-red-50"
         data-testid="nc-delete-row"
         @click="deleteSelectedRows"
+        :disabled="isActionDisabled(meta?.disabled_actions, DisabledActionsType.DELETE)"
       >
         <div v-if="selectedRows.length === 1" v-e="['a:row:delete']" class="flex gap-2 items-center">
           <GeneralIcon icon="delete" />
-          {{ $t('activity.deleteSelectedRow') }}
+          <template v-if="isActionDisabled(meta?.disabled_actions, DisabledActionsType.DELETE)">
+            {{ $t('activity.deleteSelectedRowDisabled') }}
+          </template>
+          <template v-else>
+            {{ $t('activity.deleteSelectedRow') }}
+          </template>
         </div>
         <div v-else v-e="['a:row:delete-bulk']" class="flex gap-2 items-center">
           <GeneralIcon icon="delete" />
-          {{ $t('activity.deleteSelectedRow') }}
+          <template v-if="isActionDisabled(meta?.disabled_actions, DisabledActionsType.DELETE)">
+            {{ $t('activity.deleteSelectedRowDisabled') }}
+          </template>
+          <template v-else>
+            {{ $t('activity.deleteSelectedRow') }}
+          </template>
         </div>
       </NcMenuItem>
     </template>
@@ -211,10 +223,16 @@ const generateAIBulk = async () => {
       class="nc-base-menu-item !text-red-600 !hover:bg-red-50"
       data-testid="nc-delete-all-row"
       @click="deleteAllRecords"
+      :disabled="isActionDisabled(meta?.disabled_actions, DisabledActionsType.DELETE)"
     >
       <div v-e="['a:row:delete-all']" class="flex gap-2 items-center">
         <GeneralIcon icon="delete" />
-        {{ $t('activity.deleteAllRecords') }}
+        <template v-if="isActionDisabled(meta?.disabled_actions, DisabledActionsType.DELETE)">
+          {{ $t('activity.deleteAllRecordsDisabled') }}
+        </template>
+        <template v-else>
+          {{ $t('activity.deleteAllRecords') }}
+        </template>
       </div>
     </NcMenuItem>
     <template
@@ -373,11 +391,17 @@ const generateAIBulk = async () => {
         key="delete-row"
         class="nc-base-menu-item !text-red-600 !hover:bg-red-50"
         @click="confirmDeleteRow(contextMenuRow)"
+        :disabled="isActionDisabled(meta?.disabled_actions, DisabledActionsType.DELETE)"
       >
         <div v-e="['a:row:delete']" class="flex gap-2 items-center">
           <GeneralIcon icon="delete" />
           <!-- Delete Row -->
-          {{ $t('activity.deleteRow') }}
+          <template v-if="isActionDisabled(meta?.disabled_actions, DisabledActionsType.DELETE)">
+            {{ $t('activity.deleteRowDisabled') }}
+          </template>
+          <template v-else>
+            {{ $t('activity.deleteRow') }}
+          </template>
         </div>
       </NcMenuItem>
       <NcMenuItem
@@ -385,11 +409,17 @@ const generateAIBulk = async () => {
         key="delete-selected-row"
         class="nc-base-menu-item !text-red-600 !hover:bg-red-50"
         @click="deleteSelectedRangeOfRows"
+        :disabled="isActionDisabled(meta?.disabled_actions, DisabledActionsType.DELETE)"
       >
         <div v-e="['a:row:delete']" class="flex gap-2 items-center">
           <GeneralIcon icon="delete" class="text-gray-500 text-red-600" />
           <!-- Delete Rows -->
-          {{ $t('activity.deleteRows') }}
+          <template v-if="isActionDisabled(meta?.disabled_actions, DisabledActionsType.DELETE)">
+            {{ $t('activity.deleteRowsDisabled') }}
+          </template>
+          <template v-else>
+            {{ $t('activity.deleteRows') }}
+          </template>
         </div>
       </NcMenuItem>
     </template>

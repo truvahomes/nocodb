@@ -10,6 +10,7 @@ const props = defineProps<{
   data: Row[]
   vGroup?: Group
   paginationData?: PaginatedType
+  meta?: TableType
   loadData?: (params?: any, shouldShowLoading?: boolean) => Promise<void>
   changePage?: (page: number) => void
   callAddEmptyRow?: (addAfter?: number) => Row | undefined
@@ -2448,6 +2449,7 @@ onKeyStroke('ArrowDown', onDown)
               class="nc-base-menu-item !text-red-600 !hover:bg-red-50"
               data-testid="nc-delete-row"
               @click="deleteSelectedRows"
+              :disabled="isActionDisabled(meta?.disabled_actions, DisabledActionsType.DELETE)"
             >
               <div
                 v-if="data.filter((r) => r.rowMeta.selected).length === 1"
@@ -2455,13 +2457,23 @@ onKeyStroke('ArrowDown', onDown)
                 class="flex gap-2 items-center"
               >
                 <component :is="iconMap.delete" />
-                <!-- Delete Selected Rows -->
-                {{ $t('activity.deleteSelectedRow') }}
+                <template v-if="isActionDisabled(meta?.disabled_actions, DisabledActionsType.DELETE)">
+                  {{ $t('activity.deleteSelectedRowDisabled') }}
+                </template>
+                <template v-else>
+                  <!-- Delete Selected Rows -->
+                  {{ $t('activity.deleteSelectedRow') }}
+                </template>
               </div>
               <div v-else v-e="['a:row:delete-bulk']" class="flex gap-2 items-center">
                 <component :is="iconMap.delete" />
-                <!-- Delete Selected Rows -->
-                {{ $t('activity.deleteSelectedRow') }}
+                <template v-if="isActionDisabled(meta?.disabled_actions, DisabledActionsType.DELETE)">
+                  {{ $t('activity.deleteSelectedRowDisabled') }}
+                </template>
+                <template v-else>
+                  <!-- Delete Selected Rows -->
+                  {{ $t('activity.deleteSelectedRow') }}
+                </template>
               </div>
             </NcMenuItem>
 
@@ -2577,22 +2589,34 @@ onKeyStroke('ArrowDown', onDown)
                 v-if="contextMenuTarget && (selectedRange.isSingleCell() || selectedRange.isSingleRow())"
                 class="nc-base-menu-item !text-red-600 !hover:bg-red-50"
                 @click="confirmDeleteRow(contextMenuTarget.row)"
+                :disabled="isActionDisabled(meta?.disabled_actions, DisabledActionsType.DELETE)"
               >
                 <div v-e="['a:row:delete']" class="flex gap-2 items-center">
                   <GeneralIcon icon="delete" />
                   <!-- Delete Row -->
-                  {{ $t('activity.deleteRow') }}
+                  <template v-if="isActionDisabled(meta?.disabled_actions, DisabledActionsType.DELETE)">
+                    {{ $t('activity.deleteRowDisabled') }}
+                  </template>
+                  <template v-else>
+                    {{ $t('activity.deleteRow') }}
+                  </template>
                 </div>
               </NcMenuItem>
               <NcMenuItem
                 v-else-if="contextMenuTarget && deleteRangeOfRows"
                 class="nc-base-menu-item !text-red-600 !hover:bg-red-50"
                 @click="deleteSelectedRangeOfRows"
+                :disabled="isActionDisabled(meta?.disabled_actions, DisabledActionsType.DELETE)"
               >
                 <div v-e="['a:row:delete']" class="flex gap-2 items-center">
                   <GeneralIcon icon="delete" class="text-gray-500 text-red-600" />
                   <!-- Delete Rows -->
-                  {{ $t('activity.deleteRows') }}
+                  <template v-if="isActionDisabled(meta?.disabled_actions, DisabledActionsType.DELETE)">
+                    {{ $t('activity.deleteRowsDisabled') }}
+                  </template>
+                  <template v-else>
+                    {{ $t('activity.deleteRows') }}
+                  </template>
                 </div>
               </NcMenuItem>
             </template>

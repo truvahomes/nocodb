@@ -1785,6 +1785,7 @@ defineExpose({
               v-model:selected-all-records="vSelectedAllRecords"
               :total-rows="totalRows"
               :selection="selection"
+              :meta="meta"
               :columns="columns"
               :cached-rows="cachedRows"
               :active-cell="activeCell"
