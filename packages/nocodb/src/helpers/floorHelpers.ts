@@ -1,5 +1,5 @@
-import { Column } from "src/models";
 import { UITypes } from "nocodb-sdk";
+import { Column } from "src/models";
 export function isFloorSetColumn(column: Column): boolean {
     return (
         column.uidt === UITypes.SingleSelect || 
@@ -38,12 +38,17 @@ export function isFloorSetColumn(column: Column): boolean {
     values.push('P2');
     values.push('P3');
     values.push('P4');
+    values.push('P5');
+    values.push('P6');
   
     values.push('B');
     values.push('B1');
     values.push('B2');
     values.push('B3');
-  
+    values.push('B4');
+    values.push('B5');
+    values.push('B6');
+
     values.push('G');
     values.push('L');
     values.push('LG');
@@ -52,6 +57,8 @@ export function isFloorSetColumn(column: Column): boolean {
     values.push('S');
     values.push('S1');
     values.push('S2');
+
+    values.push('12A');
   
     return values.map((value, index) => ({
       title: value,
@@ -90,11 +97,16 @@ export function isFloorSetColumn(column: Column): boolean {
     values.push('P2');
     values.push('P3');
     values.push('P4');
+    values.push('P5');
+    values.push('P6');
   
     values.push('B');
     values.push('B1');
     values.push('B2');
     values.push('B3');
+    values.push('B4');
+    values.push('B5');
+    values.push('B6');
   
     values.push('G');
     values.push('L');
@@ -104,6 +116,8 @@ export function isFloorSetColumn(column: Column): boolean {
     values.push('S');
     values.push('S1');
     values.push('S2');
+
+    values.push('12A');
   
     return values.join(',');
   }
