@@ -34,20 +34,30 @@ export function isFloorSetColumn(column: Column): boolean {
     values.push('Even');
   
     values.push('P');
+    values.push('P0');
     values.push('P1');
     values.push('P2');
     values.push('P3');
     values.push('P4');
     values.push('P5');
     values.push('P6');
+    values.push('P7');
+    values.push('P8');
+    values.push('P9');
+    values.push('P10');
   
     values.push('B');
+    values.push('B0');
     values.push('B1');
     values.push('B2');
     values.push('B3');
     values.push('B4');
     values.push('B5');
     values.push('B6');
+    values.push('B7');
+    values.push('B8');
+    values.push('B9');
+    values.push('B10');
 
     values.push('G');
     values.push('L');
@@ -55,8 +65,17 @@ export function isFloorSetColumn(column: Column): boolean {
     values.push('UG');
     
     values.push('S');
+    values.push('S0');
     values.push('S1');
     values.push('S2');
+    values.push('S3');
+    values.push('S4');
+    values.push('S5');
+    values.push('S6');
+    values.push('S7');
+    values.push('S8');
+    values.push('S9');
+    values.push('S10');
 
     values.push('12A');
   
@@ -93,20 +112,30 @@ export function isFloorSetColumn(column: Column): boolean {
     values.push('Even');
   
     values.push('P');
+    values.push('P0');
     values.push('P1');
     values.push('P2');
     values.push('P3');
     values.push('P4');
     values.push('P5');
     values.push('P6');
+    values.push('P7');
+    values.push('P8');
+    values.push('P9');
+    values.push('P10');
   
     values.push('B');
+    values.push('B0');
     values.push('B1');
     values.push('B2');
     values.push('B3');
     values.push('B4');
     values.push('B5');
     values.push('B6');
+    values.push('B7');
+    values.push('B8');
+    values.push('B9');
+    values.push('B10');
   
     values.push('G');
     values.push('L');
@@ -114,8 +143,17 @@ export function isFloorSetColumn(column: Column): boolean {
     values.push('UG');
     
     values.push('S');
+    values.push('S0');
     values.push('S1');
     values.push('S2');
+    values.push('S3');
+    values.push('S4');
+    values.push('S5');
+    values.push('S6');
+    values.push('S7');
+    values.push('S8');
+    values.push('S9');
+    values.push('S10');
 
     values.push('12A');
   
