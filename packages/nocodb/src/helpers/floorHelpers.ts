@@ -83,6 +83,8 @@ export function isFloorSetColumn(column: Column): boolean {
   // String Ranges
   values.push('B to G');
 
+  values.push('ST');
+
   return values;
 }
 
