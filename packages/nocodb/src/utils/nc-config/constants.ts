@@ -29,6 +29,10 @@ export const defaultConnectionOptions = {
   },
 };
 
+// MySQL-only: max SELECT execution time in milliseconds (0 = disabled)
+// e.g. NC_QUERY_TIMEOUT_MS=60000 kills any SELECT that runs longer than 60s
+export const NC_QUERY_TIMEOUT_MS = +process.env.NC_QUERY_TIMEOUT_MS || 0;
+
 export const avoidSSL = [
   'localhost',
   '127.0.0.1',
