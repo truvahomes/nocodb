@@ -25,9 +25,9 @@ export const buttonColorMap = {
       disabled: { background: 'var(--nc-bg-gray-light)', text: 'var(--nc-content-gray-disabled)' },
     },
     blue: {
-      base: { background: '#36BFFF', text: '#FFFFFF' },
-      hover: { background: '#2B99CC', text: '#FFFFFF' },
-      loader: '#36BFFF',
+      base: { background: '#B85F33', text: '#FFFFFF' },
+      hover: { background: '#994D29', text: '#FFFFFF' },
+      loader: '#B85F33',
       disabled: { background: 'var(--nc-bg-gray-light)', text: 'var(--nc-content-gray-disabled)' },
     },
     orange: {
@@ -149,10 +149,10 @@ export const buttonColorMap = {
       loader: '#B33771',
     },
     blue: {
-      base: { background: 'transparent', text: '#36BFFF' },
-      hover: { background: 'var(--nc-bg-gray-light)', text: '#36BFFF' },
+      base: { background: 'transparent', text: '#B85F33' },
+      hover: { background: 'var(--nc-bg-gray-light)', text: '#B85F33' },
       disabled: { background: 'var(--nc-bg-gray-light)', text: 'var(--nc-content-gray-disabled)' },
-      loader: '#36BFFF',
+      loader: '#B85F33',
     },
     orange: {
       base: { background: 'transparent', text: '#FA8231' },

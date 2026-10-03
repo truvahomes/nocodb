@@ -57,39 +57,44 @@
 
   --color-base-none: #ffffff00;
 
-  /* 🎨 Brand */
-  --color-brand-20: #f5f6ff;
-  --rgb-color-brand-20: 245, 246, 255;
+  /* 🎨 Brand — Truva orange ramp (overrides upstream NocoDB blue).
+     Every brand consumer resolves through these vars: themeV4Colors.brand.*
+     maps to --rgb-color-brand-*, and the semantic --nc-content-brand /
+     --nc-bg-brand / --nc-border-brand aliases below cascade from them. Changing
+     the ramp here rebrands the canvas cell renderers, Ant overrides and all
+     Vue components at once — do NOT reintroduce hardcoded hex in renderers. */
+  --color-brand-20: #fff8f5;
+  --rgb-color-brand-20: 255, 248, 245;
 
-  --color-brand-50: #f0f3ff;
-  --rgb-color-brand-50: 240, 243, 255;
+  --color-brand-50: #fff3f0;
+  --rgb-color-brand-50: 255, 243, 240;
 
-  --color-brand-100: #d6e0ff;
-  --rgb-color-brand-100: 214, 224, 255;
+  --color-brand-100: #ffe2da;
+  --rgb-color-brand-100: 255, 226, 218;
 
-  --color-brand-200: #adc2ff;
-  --rgb-color-brand-200: 173, 194, 255;
+  --color-brand-200: #ffc5b5;
+  --rgb-color-brand-200: 255, 197, 181;
 
-  --color-brand-300: #85a3ff;
-  --rgb-color-brand-300: 133, 163, 255;
+  --color-brand-300: #ffa890;
+  --rgb-color-brand-300: 255, 168, 144;
 
-  --color-brand-400: #5c85ff;
-  --rgb-color-brand-400: 92, 133, 255;
+  --color-brand-400: #ff8b6b;
+  --rgb-color-brand-400: 255, 139, 107;
 
-  --color-brand-500: #3366ff;
-  --rgb-color-brand-500: 51, 102, 255;
+  --color-brand-500: #ff6f38;
+  --rgb-color-brand-500: 255, 111, 56;
 
-  --color-brand-600: #2952cc;
-  --rgb-color-brand-600: 41, 82, 204;
+  --color-brand-600: #e65a2d;
+  --rgb-color-brand-600: 230, 90, 45;
 
-  --color-brand-700: #1f3d99;
-  --rgb-color-brand-700: 31, 61, 153;
+  --color-brand-700: #cc4522;
+  --rgb-color-brand-700: 204, 69, 34;
 
-  --color-brand-800: #142966;
-  --rgb-color-brand-800: 20, 41, 102;
+  --color-brand-800: #993016;
+  --rgb-color-brand-800: 153, 48, 22;
 
-  --color-brand-900: #0a1433;
-  --rgb-color-brand-900: 10, 20, 51;
+  --color-brand-900: #66180b;
+  --rgb-color-brand-900: 102, 24, 11;
 
   /* 🎨 Gray */
   --color-gray-20: #fdfdfd;
@@ -228,38 +233,38 @@
   --rgb-color-maroon-900: 66, 0, 31;
 
   /* 🎨 Blue */
-  --color-blue-20: #f6fbff;
-  --rgb-color-blue-20: 246, 251, 255;
+  --color-blue-20: #fef8f5;
+  --rgb-color-blue-20: 254, 248, 245;
 
-  --color-blue-50: #edf9ff;
-  --rgb-color-blue-50: 237, 249, 255;
+  --color-blue-50: #fdf1eb;
+  --rgb-color-blue-50: 253, 241, 235;
 
-  --color-blue-100: #d7f2ff;
-  --rgb-color-blue-100: 215, 242, 255;
+  --color-blue-100: #f9e0d2;
+  --rgb-color-blue-100: 249, 224, 210;
 
-  --color-blue-200: #afe5ff;
-  --rgb-color-blue-200: 175, 229, 255;
+  --color-blue-200: #f0c0a4;
+  --rgb-color-blue-200: 240, 192, 164;
 
-  --color-blue-300: #86d9ff;
-  --rgb-color-blue-300: 134, 217, 255;
+  --color-blue-300: #e39f77;
+  --rgb-color-blue-300: 227, 159, 119;
 
-  --color-blue-400: #5eccff;
-  --rgb-color-blue-400: 94, 204, 255;
+  --color-blue-400: #d17e51;
+  --rgb-color-blue-400: 209, 126, 81;
 
-  --color-blue-500: #36bfff;
-  --rgb-color-blue-500: 54, 191, 255;
+  --color-blue-500: #b85f33;
+  --rgb-color-blue-500: 184, 95, 51;
 
-  --color-blue-600: #2b99cc;
-  --rgb-color-blue-600: 43, 153, 204;
+  --color-blue-600: #994d29;
+  --rgb-color-blue-600: 153, 77, 41;
 
-  --color-blue-700: #207399;
-  --rgb-color-blue-700: 32, 115, 153;
+  --color-blue-700: #7a3c20;
+  --rgb-color-blue-700: 122, 60, 32;
 
-  --color-blue-800: #164c66;
-  --rgb-color-blue-800: 22, 76, 102;
+  --color-blue-800: #5a2b17;
+  --rgb-color-blue-800: 90, 43, 23;
 
-  --color-blue-900: #0b2633;
-  --rgb-color-blue-900: 11, 38, 51;
+  --color-blue-900: #38190d;
+  --rgb-color-blue-900: 56, 25, 13;
 
   /* 🎨 Orange */
   --color-orange-20: #fff9f4;
@@ -410,15 +415,15 @@
   --free-plan-badge-text-color: var(--color-gray-800, #1f293a);
 
   /* Plus Plan  */
-  --plus-plan-color: var(--color-blue-50, #edf9ff);
-  --plus-plan-accent: var(--color-blue-200, #afe5ff);
-  --plus-plan-primary: var(--color-blue-700, #207399);
-  --plus-plan-bg-light: var(--color-blue-50, #edf9ff);
-  --plus-plan-bg-dark: var(--color-blue-100, #d7f2ff);
-  --plus-plan-border: var(--color-blue-200, #afe5ff);
-  --plus-plan-chart-fill-color: var(--color-blue-700, #207399);
-  --plus-plan-badge-bg-color: var(--color-blue-100, #d7f2ff);
-  --plus-plan-badge-text-color: var(--color-blue-700, #207399);
+  --plus-plan-color: var(--color-blue-50, #fdf1eb);
+  --plus-plan-accent: var(--color-blue-200, #f0c0a4);
+  --plus-plan-primary: var(--color-blue-700, #7a3c20);
+  --plus-plan-bg-light: var(--color-blue-50, #fdf1eb);
+  --plus-plan-bg-dark: var(--color-blue-100, #f9e0d2);
+  --plus-plan-border: var(--color-blue-200, #f0c0a4);
+  --plus-plan-chart-fill-color: var(--color-blue-700, #7a3c20);
+  --plus-plan-badge-bg-color: var(--color-blue-100, #f9e0d2);
+  --plus-plan-badge-text-color: var(--color-blue-700, #7a3c20);
 
   /* Business Plan  */
   --business-plan-color: var(--color-pink-50, #faf5ff);
@@ -487,42 +492,42 @@
 
   --color-base-none: #ffffff00;
 
-  /* 🎨 Brand */
-  --color-brand-20: #161d38;
-  --rgb-color-brand-20: 22, 29, 56;
+  /* 🎨 Brand — Truva orange ramp, dark mode.
+     Mirrors upstream's inverted dark scale: low shades are deep warm browns,
+     high shades are bright peach, so 500 reads as the legible accent on a dark
+     canvas. Same cascade as the light block above. */
+  --color-brand-20: #2a1a12;
+  --rgb-color-brand-20: 42, 26, 18;
 
-  --color-brand-50: #141a3a;
-  --rgb-color-brand-50: 20, 26, 58;
+  --color-brand-50: #331d12;
+  --rgb-color-brand-50: 51, 29, 18;
 
-  /* --color-brand-50: #141a57;
-  --rgb-color-brand-50: 20, 26, 87; */
+  --color-brand-100: #7a2e14;
+  --rgb-color-brand-100: 122, 46, 20;
 
-  --color-brand-100: #19288f;
-  --rgb-color-brand-100: 25, 40, 143;
+  --color-brand-200: #a33c18;
+  --rgb-color-brand-200: 163, 60, 24;
 
-  --color-brand-200: #1727b6;
-  --rgb-color-brand-200: 23, 39, 182;
+  --color-brand-300: #e65a2d;
+  --rgb-color-brand-300: 230, 90, 45;
 
-  --color-brand-300: #1b43f5;
-  --rgb-color-brand-300: 27, 67, 245;
+  --color-brand-400: #ff6f38;
+  --rgb-color-brand-400: 255, 111, 56;
 
-  --color-brand-400: #3366ff;
-  --rgb-color-brand-400: 51, 102, 255;
+  --color-brand-500: #ff8b6b;
+  --rgb-color-brand-500: 255, 139, 107;
 
-  --color-brand-500: #598eff;
-  --rgb-color-brand-500: 89, 142, 255;
+  --color-brand-600: #ffa890;
+  --rgb-color-brand-600: 255, 168, 144;
 
-  --color-brand-600: #8eb6ff;
-  --rgb-color-brand-600: 142, 182, 255;
+  --color-brand-700: #ffc5b5;
+  --rgb-color-brand-700: 255, 197, 181;
 
-  --color-brand-700: #bcd2ff;
-  --rgb-color-brand-700: 188, 210, 255;
+  --color-brand-800: #ffe2da;
+  --rgb-color-brand-800: 255, 226, 218;
 
-  --color-brand-800: #d9e5ff;
-  --rgb-color-brand-800: 217, 229, 255;
-
-  --color-brand-900: #eef4ff;
-  --rgb-color-brand-900: 238, 244, 255;
+  --color-brand-900: #fff3f0;
+  --rgb-color-brand-900: 255, 243, 240;
 
   /* 🎨 Gray */
   --color-gray-20: #14161a;
@@ -661,38 +666,38 @@
   --rgb-color-maroon-900: 251, 244, 248;
 
   /* 🎨 Blue */
-  --color-blue-20: #111b26;
-  --rgb-color-blue-20: 17, 27, 38;
+  --color-blue-20: #241711;
+  --rgb-color-blue-20: 36, 23, 17;
 
-  --color-blue-50: #062e4b;
-  --rgb-color-blue-50: 6, 46, 75;
+  --color-blue-50: #3d2116;
+  --rgb-color-blue-50: 61, 33, 22;
 
-  --color-blue-100: #02588a;
-  --rgb-color-blue-100: 2, 88, 138;
+  --color-blue-100: #6b3418;
+  --rgb-color-blue-100: 107, 52, 24;
 
-  --color-blue-200: #0069a7;
-  --rgb-color-blue-200: 0, 105, 167;
+  --color-blue-200: #86431f;
+  --rgb-color-blue-200: 134, 67, 31;
 
-  --color-blue-300: #0084ce;
-  --rgb-color-blue-300: 0, 132, 206;
+  --color-blue-300: #a55728;
+  --rgb-color-blue-300: 165, 87, 40;
 
-  --color-blue-400: #06a5f1;
-  --rgb-color-blue-400: 6, 165, 241;
+  --color-blue-400: #c47038;
+  --rgb-color-blue-400: 196, 112, 56;
 
-  --color-blue-500: #36bfff;
-  --rgb-color-blue-500: 54, 191, 255;
+  --color-blue-500: #d98f55;
+  --rgb-color-blue-500: 217, 143, 85;
 
-  --color-blue-600: #78d3ff;
-  --rgb-color-blue-600: 120, 211, 255;
+  --color-blue-600: #e8ad80;
+  --rgb-color-blue-600: 232, 173, 128;
 
-  --color-blue-700: #b8e6ff;
-  --rgb-color-blue-700: 184, 230, 255;
+  --color-blue-700: #f2c8a7;
+  --rgb-color-blue-700: 242, 200, 167;
 
-  --color-blue-800: #dff2ff;
-  --rgb-color-blue-800: 223, 242, 255;
+  --color-blue-800: #f9e1cd;
+  --rgb-color-blue-800: 249, 225, 205;
 
-  --color-blue-900: #eff9ff;
-  --rgb-color-blue-900: 239, 249, 255;
+  --color-blue-900: #fdf2e9;
+  --rgb-color-blue-900: 253, 242, 233;
 
   /* 🎨 Orange */
   --color-orange-20: #2b1d12;
@@ -846,15 +851,15 @@
   --free-plan-badge-text-color: var(--color-gray-800, #1f293a);
 
   /* Plus Plan  */
-  --plus-plan-color: #062e4b;
-  --plus-plan-accent: #1c5062;
-  --plus-plan-primary: #7cd0ff;
-  --plus-plan-bg-light: #122b36;
-  --plus-plan-bg-dark: #0b1e26;
-  --plus-plan-border: #1e4a5b;
-  --plus-plan-chart-fill-color: #63c2f5;
-  --plus-plan-badge-bg-color: var(--color-blue-100, #d7f2ff);
-  --plus-plan-badge-text-color: var(--color-blue-700, #207399);
+  --plus-plan-color: #3d2116;
+  --plus-plan-accent: #62321c;
+  --plus-plan-primary: #e8ad80;
+  --plus-plan-bg-light: #36211a;
+  --plus-plan-bg-dark: #26160f;
+  --plus-plan-border: #5b3522;
+  --plus-plan-chart-fill-color: #d98f55;
+  --plus-plan-badge-bg-color: var(--color-blue-100, #f9e0d2);
+  --plus-plan-badge-text-color: var(--color-blue-700, #7a3c20);
 
   /* Business Plan  */
   --business-plan-color: #25172f;
@@ -907,12 +912,12 @@
      fill, focus rings, box-shadows, text selection) that aren't part of the
      --color-brand-* ramp. Same value in light & dark, mirroring those literals.
      White-labelling overrides this one var to recolour them all. */
-  --nc-brand-accent: #3366ff;
-  --nc-brand-accent-rgb: 51, 102, 255;
+  --nc-brand-accent: #ff6f38;
+  --nc-brand-accent-rgb: 255, 111, 56;
   /* Darker hover shade of the accent — also mode-independent (constant in light
      & dark), mirroring the hand-written #2952cc hover literals. Do NOT use
      --color-brand-600 for these: that ramp stop inverts in dark mode. */
-  --nc-brand-accent-hover: #2952cc;
+  --nc-brand-accent-hover: #e65a2d;
 
   /* NocoAI accent — the agents CTA pink-red. Mode-independent for the same
      reason as the brand accent above: it backs solid surfaces carrying white

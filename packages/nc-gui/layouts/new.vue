@@ -174,7 +174,7 @@ export default {
     @apply relative;
 
     & .color-band {
-      @apply opacity-0 absolute w-2 h-7 -left-1 top-[6px] bg-[#4351E8] rounded-[99px] trasition-opacity;
+      @apply opacity-0 absolute w-2 h-7 -left-1 top-[6px] bg-[#FF6F38] rounded-[99px] trasition-opacity;
     }
   }
 

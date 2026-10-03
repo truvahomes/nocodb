@@ -54,10 +54,11 @@ body {
   --navbar-bg: #fafafa;
   --navbar-border: #e0e0e0;
 
-  --ant-primary-color: #3366ff !important;
-  --ant-primary-color-hover: #5c85ff !important;
-  --ant-primary-color-active: #3366ff !important;
-  --ant-primary-color-outline: rgba(51, 102, 255, 0.24) !important;
+  /* Truva brand — keep in sync with --color-brand-* in assets/css/variables.css */
+  --ant-primary-color: #ff6f38 !important;
+  --ant-primary-color-hover: #ffa890 !important;
+  --ant-primary-color-active: #ff6f38 !important;
+  --ant-primary-color-outline: rgba(255, 111, 56, 0.24) !important;
 }
 
 ::-moz-selection {
@@ -630,7 +631,7 @@ a {
 }
 
 .animated-bg-gradient {
-  background: linear-gradient(122deg, #6f3381, #ec4899, #fedfe1, #4351e8);
+  background: linear-gradient(122deg, #6f3381, #ec4899, #fedfe1, #ff6f38);
   background-size: 800% 800%;
 
   -webkit-animation: gradient 4s ease infinite;

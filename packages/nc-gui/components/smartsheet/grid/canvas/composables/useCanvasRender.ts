@@ -1664,7 +1664,7 @@ export function useCanvasRender({
     const whiteLabelled = !!brandColor.value
     _rowColors = {
       selectionBg: whiteLabelled ? getColor(themeV4Colors.brand['50']) : getColor('#F6F7FE', themeV4Colors.brand['50']),
-      selectionBgOnRowColor: whiteLabelled ? getColor(themeV4Colors.brand['500'], undefined, 0.05) : '#3366ff0d',
+      selectionBgOnRowColor: whiteLabelled ? getColor(themeV4Colors.brand['500'], undefined, 0.05) : '#ff6f380d',
       // Grid lines are one shade darker in light theme — the same gray tokens
       // have ~half the contrast on white than on the dark theme background
       borderMedium: getColor(themeV4Colors.gray['300'], 'var(--nc-grid-line)'),
