@@ -10,6 +10,23 @@ const WINDI_SHADES = ['50', '100', '200', '300', '400', '500', '600', '700', '80
 const canonicalShades = (palette: Record<string, string>) =>
   Object.fromEntries(WINDI_SHADES.filter((shade) => shade in palette).map((shade) => [shade, palette[shade]]))
 
+// Truva brand ramp — single source of truth for the hardcoded-hex palettes
+// below (themeColors, themeV2Colors, themeV3Colors). Keep these values in sync
+// with the --color-brand-* CSS variables in assets/css/variables.css, which is
+// what themeV4Colors and all canvas cell renderers resolve through.
+const truvaBrand = {
+  50: '#FFF3F0',
+  100: '#FFE2DA',
+  200: '#FFC5B5',
+  300: '#FFA890',
+  400: '#FF8B6B',
+  500: '#FF6F38',
+  600: '#E65A2D',
+  700: '#CC4522',
+  800: '#993016',
+  900: '#66180B',
+}
+
 export const theme = {
   light: ['#ffdce5', '#fee2d5', '#ffeab6', '#d1f7c4', '#ede2fe', '#eee', '#cfdffe', '#d0f1fd', '#c2f5e8', '#ffdaf6'],
   dark: [
@@ -29,7 +46,7 @@ export const theme = {
 export const themeColors = {
   'background': '#FFFFFF',
   'surface': '#FFFFFF',
-  'primary': '#4351e8',
+  'primary': truvaBrand[500],
   'primary-selected': 'var(--color-brand-50)',
   'primary-selected-sidebar': 'var(--color-brand-50)',
   'hover': '#E1E3E6',
@@ -47,17 +64,17 @@ export const themeColors = {
 export const themeV2Colors = {
   /** Primary shades */
   'royal-blue': {
-    'DEFAULT': '#4351E8',
-    '50': '#E7E8FC',
-    '100': '#D4D8FA',
-    '200': '#B0B6F5',
-    '300': '#8C94F1',
-    '400': '#6773EC',
-    '500': '#4351E8',
-    '600': '#1A2BD8',
-    '700': '#1421A6',
-    '800': '#0E1774',
-    '900': '#080D42',
+    'DEFAULT': truvaBrand[500],
+    '50': truvaBrand[50],
+    '100': truvaBrand[100],
+    '200': truvaBrand[200],
+    '300': truvaBrand[300],
+    '400': truvaBrand[400],
+    '500': truvaBrand[500],
+    '600': truvaBrand[600],
+    '700': truvaBrand[700],
+    '800': truvaBrand[800],
+    '900': truvaBrand[900],
   },
 
   /** Accent shades */
@@ -75,16 +92,16 @@ export const themeV3Colors = {
     black: '#000000',
   },
   brand: {
-    50: '#EBF0FF',
-    100: '#D6E0FF',
-    200: '#ADC2FF',
-    300: '#85A3FF',
-    400: '#5C85FF',
-    500: '#3366FF',
-    600: '#2952CC',
-    700: '#1F3D99',
-    800: '#142966',
-    900: '#0A1433',
+    50: truvaBrand[50],
+    100: truvaBrand[100],
+    200: truvaBrand[200],
+    300: truvaBrand[300],
+    400: truvaBrand[400],
+    500: truvaBrand[500],
+    600: truvaBrand[600],
+    700: truvaBrand[700],
+    800: truvaBrand[800],
+    900: truvaBrand[900],
   },
   gray: {
     10: '#FCFCFC',
@@ -148,16 +165,16 @@ export const themeV3Colors = {
     900: '#190829',
   },
   blue: {
-    50: '#EDF9FF',
-    100: '#D7F2FF',
-    200: '#AFE5FF',
-    300: '#86D9FF',
-    400: '#5ECCFF',
-    500: '#36BFFF',
-    600: '#2B99CC',
-    700: '#207399',
-    800: '#164C66',
-    900: '#0B2633',
+    50: '#FDF1EB',
+    100: '#F9E0D2',
+    200: '#F0C0A4',
+    300: '#E39F77',
+    400: '#D17E51',
+    500: '#B85F33',
+    600: '#994D29',
+    700: '#7A3C20',
+    800: '#5A2B17',
+    900: '#38190D',
   },
   yellow: {
     50: '#fffbf2',
@@ -281,11 +298,11 @@ const designSystem = {
     // '#ADC2FF',
     // '#85A3FF',
     // '#5C85FF',
-    '#3366FF',
-    '#2952CC',
-    '#1F3D99',
-    '#142966',
-    '#0A1433',
+    '#FF6F38',
+    '#E65A2D',
+    '#CC4522',
+    '#993016',
+    '#66180B',
     // '#FCFCFC',
     // '#F9F9FA',
     // '#F4F4F5',

@@ -11,8 +11,8 @@ const { brandColor } = useBranding()
 
 // NuxtLoadingIndicator reads `color` as a JS prop (a canvas-like fill), so it
 // can't pick up the --nc-brand-accent CSS var — bind the brand seed directly,
-// falling back to the default NocoDB blue when not white-labelled.
-const loaderColor = computed(() => brandColor.value || '#3366FF')
+// falling back to the Truva brand orange when not white-labelled.
+const loaderColor = computed(() => brandColor.value || '#FF6F38')
 
 const stopLoadingIndicator = () => {
   forcedNextTick(() => {

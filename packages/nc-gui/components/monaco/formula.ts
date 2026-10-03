@@ -21,8 +21,8 @@ const theme: editor.IStandaloneThemeData = {
   colors: {
     'editor.foreground': '#000000',
     'editor.background': '#FFFFFF',
-    'editorCursor.foreground': '#3366FF',
-    'editor.selectionBackground': '#3366FF50',
+    'editorCursor.foreground': '#FF6F38',
+    'editor.selectionBackground': '#FF6F3850',
     'focusBorder': '#ffffff',
   },
 }

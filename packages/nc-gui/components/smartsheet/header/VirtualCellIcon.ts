@@ -44,7 +44,7 @@ export const renderIcon = (column: ColumnType, relationColumn?: ColumnType) => {
         case RelationTypes.HAS_MANY:
           return { icon: iconMap.cellLookup, color: 'text-orange-500', hex: '#FA8231' }
         case RelationTypes.BELONGS_TO:
-          return { icon: iconMap.cellLookup, color: 'text-blue-500', hex: '#36BFFF' }
+          return { icon: iconMap.cellLookup, color: 'text-blue-500', hex: '#B85F33' }
         case RelationTypes.ONE_TO_ONE:
           return { icon: iconMap.cellLookup, color: 'text-purple-500', hex: '#7D26CD' }
       }
@@ -56,7 +56,7 @@ export const renderIcon = (column: ColumnType, relationColumn?: ColumnType) => {
         case RelationTypes.HAS_MANY:
           return { icon: iconMap.cellRollup, color: 'text-orange-500', hex: '#FA8231' }
         case RelationTypes.BELONGS_TO:
-          return { icon: iconMap.cellRollup, color: 'text-blue-500', hex: '#36BFFF' }
+          return { icon: iconMap.cellRollup, color: 'text-blue-500', hex: '#B85F33' }
         case RelationTypes.ONE_TO_ONE:
           return { icon: iconMap.cellRollup, color: 'text-purple-500', hex: '#7D26CD' }
       }
