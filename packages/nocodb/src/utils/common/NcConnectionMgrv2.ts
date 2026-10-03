@@ -4,6 +4,7 @@ import type Source from '~/models/Source';
 import {
   defaultConnectionConfig,
   defaultConnectionOptions,
+  NC_QUERY_TIMEOUT_MS,
 } from '~/utils/nc-config';
 import SqlClientFactory from '~/db/sql-client/lib/SqlClientFactory';
 import { XKnex } from '~/db/CustomKnex';
@@ -139,6 +140,26 @@ export default class NcConnectionMgrv2 {
     const knexConfig = {
       ...defaultConnectionOptions,
       ...connectionConfig,
+      pool: {
+        ...defaultConnectionOptions.pool,
+        ...(connectionConfig.pool || {}),
+        // For MySQL: auto-kill SELECT statements that exceed NC_QUERY_TIMEOUT_MS.
+        // Applies only when the env var is set (> 0) and the client is MySQL.
+        // This prevents runaway correlated-subquery views (e.g. Links columns on
+        // large tables) from saturating production RDS CPU.
+        ...(NC_QUERY_TIMEOUT_MS > 0 &&
+        (connectionConfig.client === 'mysql2' ||
+          connectionConfig.client === 'mysql')
+          ? {
+              afterCreate: (conn: any, done: any) => {
+                conn.query(
+                  `SET SESSION max_execution_time = ${NC_QUERY_TIMEOUT_MS}`,
+                  (err: any) => done(err, conn),
+                );
+              },
+            }
+          : {}),
+      },
       connection: {
         ...defaultConnectionConfig,
         ...connectionConfig.connection,
