@@ -1,0 +1,28 @@
+# Build context trimming for Dockerfile.truva.
+# Without this, `docker build packages/nocodb` uploads node_modules and dist
+# (hundreds of MB) before the first layer even runs.
+#
+# Note: Dockerfile.truva copies `src/public/`, so src is excluded with that one
+# path re-included — do not collapse this into a bare `src`.
+
+node_modules
+dist
+coverage
+.nyc_output
+tsconfig.tsbuildinfo
+
+# Tests and local tooling never ship
+test
+tests
+jest.config.js
+
+# Source is compiled into docker/main.js ahead of the build; only the static
+# public assets are needed at runtime.
+src
+!src/public
+
+.DS_Store
+*.log
+.vscode
+.idea
+noco.db*
