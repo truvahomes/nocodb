@@ -17,6 +17,7 @@ import {
   CURRENT_USER_TOKEN,
   EventType,
   extractFilterFromXwhere,
+  extractRolesObj,
   isAIPromptCol,
   isAttachment,
   isBtLikeV2Junction,
@@ -39,6 +40,9 @@ import {
   parseHelper,
   PermissionEntity,
   PermissionKey,
+  PermissionMeta,
+  PermissionRoleMap,
+  PermissionRolePower,
   RelationTypes,
   resolveCurrentUserToken,
   UITypes,
@@ -144,6 +148,7 @@ import {
   Filter,
   Hook,
   Model,
+  Permission,
   PresignedUrl,
   SelectOption,
   Sort,
@@ -10602,13 +10607,101 @@ class BaseModelSqlv2 implements IBaseModelSqlV2 {
 
   async statsUpdate(_args: { count: number }) {}
 
-  async checkPermission(_params: {
+  /**
+   * Gate a write on the `nc_permissions` rules configured for this base.
+   *
+   * Truva: upstream leaves this body empty — the permission *shape* ships in
+   * Community Edition but the enforcement is Enterprise-only. We implement it
+   * here, which is what the fork's old `disabled_actions` CSV column on
+   * MODELS/COLUMNS used to do. Living inside this hook (rather than in a
+   * parallel column read from ~12 bespoke call sites) means upstream keeps
+   * maintaining the call sites for us.
+   *
+   * Fails open on unexpected errors: a malformed permission row must not brick
+   * every write to a base. An *applicable and unsatisfied* rule still throws.
+   */
+  async checkPermission(params: {
     entity: PermissionEntity;
     entityId: string | string[];
     permission: PermissionKey;
     user: any;
     req: any;
-  }) {}
+  }) {
+    const { entity, entityId, permission, user } = params;
+
+    // System/internal writes (migrations, meta sync, background jobs) carry no
+    // user and must not be gated — only user-initiated requests are.
+    if (!user) return;
+
+    let applicable: Permission[];
+
+    try {
+      const permissions = await Permission.list(
+        this.context,
+        this.model.base_id,
+      );
+      if (!permissions?.length) return;
+
+      const entityIds = (
+        Array.isArray(entityId) ? entityId : [entityId]
+      ).filter(Boolean);
+
+      applicable = permissions.filter(
+        (p) =>
+          p.entity === entity &&
+          p.permission === permission &&
+          entityIds.includes(p.entity_id),
+      );
+    } catch (e) {
+      this.logger.warn({
+        error: e,
+        details: 'Failed to resolve permissions; allowing write',
+      });
+      return;
+    }
+
+    if (!applicable.length) return;
+
+    const permissionRole = this.resolvePermissionRole(user);
+
+    for (const rule of applicable) {
+      const allowed = await Permission.isAllowed(this.context, rule, {
+        id: user.id,
+        role: permissionRole,
+        is_agent: user.is_agent,
+      });
+
+      if (!allowed) {
+        NcError.forbidden(
+          `You do not have permission to ${
+            PermissionMeta[permission]?.description ?? 'perform this action'
+          }`,
+        );
+      }
+    }
+  }
+
+  /**
+   * The caller's highest-power base role, as a `ProjectRoles` value.
+   *
+   * `user.base_roles` is a `{ [role]: boolean }` map that can carry several
+   * truthy roles at once, so we pick the most powerful rather than whichever
+   * key enumerates first — otherwise an owner could be evaluated as a viewer.
+   */
+  protected resolvePermissionRole(user: any) {
+    const roles = extractRolesObj(user.base_roles ?? user.roles);
+    if (!roles) return undefined;
+
+    return (
+      Object.keys(PermissionRoleMap) as (keyof typeof PermissionRoleMap)[]
+    )
+      .filter((role) => roles[role])
+      .sort(
+        (a, b) =>
+          PermissionRolePower[PermissionRoleMap[b]] -
+          PermissionRolePower[PermissionRoleMap[a]],
+      )[0] as any;
+  }
 
   /**
    * Returns RLS (Row-Level Security) filter conditions for the current user.
