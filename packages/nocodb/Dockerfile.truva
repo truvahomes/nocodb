@@ -1,0 +1,99 @@
+# syntax=docker/dockerfile:1
+
+###########
+# Truva NocoDB image
+#
+# Based on upstream's final packages/nocodb/Dockerfile (removed from the OSS
+# mirror in e4d5201c05 "chore: remove unused actions and scripts"), with three
+# deliberate Truva differences:
+#
+#   1. No Litestream stage. Litestream replicates a local SQLite file to S3;
+#      Truva runs on MySQL (RDS), so the golang build stage and the dasel
+#      binary are dead weight. Entry is docker/start.sh (`node docker/main.js`)
+#      instead of docker/start-litestream.sh.
+#   2. nc-lib-gui is repointed at the locally built copy. package.json pins
+#      the published `nc-lib-gui` from npm, which is stock NocoDB — shipping
+#      that would silently ship the upstream blue dashboard instead of the
+#      Truva-branded one. The sed below is what makes our GUI reach the image.
+#   3. nocodb-sdk is uninstalled before the prod install. It is a
+#      `workspace:^` dep that cannot resolve inside this build context, and
+#      docker/rspack.config.js already bundles it into docker/main.js via
+#      `nodeExternals({ allowlist: ['nocodb-sdk'] })`, so it is not needed at
+#      runtime.
+#
+# Build context is packages/nocodb. Expects CI to have already run:
+#   nc-gui      -> pnpm run build:copy   (populates ../nc-lib-gui/lib/dist)
+#   nocodb      -> pnpm run build:obfuscate && pnpm run docker:build
+#                 (the latter emits docker/main.js)
+#   plus an rsync of the built GUI into docker/nc-gui and docker/nc-lib-gui.
+###########
+
+###########
+# Builder
+###########
+FROM node:22-slim AS builder
+WORKDIR /usr/src/app
+
+# Dependencies required for node-gyp and other native build tools
+RUN apt-get update && apt-get install -y \
+    python3 \
+    python-is-python3 \
+    make \
+    g++ \
+    libssl-dev \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# Install pnpm
+RUN corepack enable && corepack prepare pnpm@9.15.4 --activate
+
+# Copy application dependency manifests and prebuilt artefacts
+COPY --link ./package.json ./package.json
+COPY --link ./pnpm-workspace.yaml ./pnpm-workspace.yaml
+COPY --link ./docker/nc-gui/ ./docker/nc-gui/
+COPY --link ./docker/nc-lib-gui/ ./docker/nc-lib-gui/
+COPY --link ./docker/main.js ./docker/main.js
+COPY --link ./docker/start.sh /usr/src/appEntry/start.sh
+COPY --link src/public/ ./docker/public/
+
+# Ship the Truva-branded dashboard rather than the published NocoDB one.
+RUN sed -i 's|"nc-lib-gui": ".*"|"nc-lib-gui": "./docker/nc-lib-gui"|' ./package.json
+
+# pnpm must produce a flat node_modules (no symlinks) for modclean to work
+RUN echo "node-linker=hoisted" > .npmrc
+
+# Install production dependencies, shrink node_modules with modclean, drop the
+# sqlite3 build deps, and make the entrypoint executable.
+# The modclean ignore list tracks upstream's — @react-email, @linear, jsdom and
+# friends break if their dist/ or lru-cache internals are stripped.
+RUN pnpm remove nocodb-sdk || true
+RUN pnpm install --prod --shamefully-hoist --reporter=silent \
+    && pnpm dlx modclean --patterns="default:*" --ignore="nc-lib-gui/**,dayjs/**,express-status-monitor/**,@azure/msal-node/dist/**,@react-email/**,@linear/**,jsdom/**,formdata-polyfill/**,**/lru-cache/**,**/@asamuzakjp/**,**/cssstyle/**" --run \
+    && rm -rf ./node_modules/sqlite3/deps \
+    && chmod +x /usr/src/appEntry/start.sh
+
+##########
+# Runner
+##########
+FROM node:22-slim
+WORKDIR /usr/src/app
+
+ENV NC_DOCKER=0.6 \
+    NC_TOOL_DIR=/usr/app/data/ \
+    NODE_ENV=production \
+    PORT=8080
+
+RUN apt-get update && apt-get install -y \
+    dumb-init \
+    curl \
+    jq \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# Copy production code & entrypoint
+COPY --link --from=builder /usr/src/app/ /usr/src/app/
+COPY --link --from=builder /usr/src/appEntry/ /usr/src/appEntry/
+
+EXPOSE 8080
+
+ENTRYPOINT ["/usr/bin/dumb-init", "--"]
+
+CMD ["/usr/src/appEntry/start.sh"]
