@@ -570,26 +570,61 @@ export interface WorkflowListV3Type {
 }
 
 /**
- * Validator configuration for a form field.
- */
+* One validation rule on a form field. The renderer matches on `type` with no fallback branch, so a type outside this enum is dropped silently — the enum is kept in sync with `nocodb-sdk`'s validation type unions (`src/lib/form.ts`).
+
+Note `required` is NOT a validator type: use the sibling `required` boolean on the field config. Option limiting is not a validator either: use `is_limit_option`.
+
+Custom validators are evaluated by the Enterprise form renderer only.
+*/
 export interface FormFieldValidatorV3Type {
-  /** Type of validation to apply. */
-  type?:
-    | 'required'
-    | 'regex'
-    | 'minValue'
-    | 'maxValue'
+  /**
+   * Type of validation to apply. Applicable field types:
+   * - text: `minLength`, `maxLength`, `startsWith`, `endsWith`, `includes`, `notIncludes`, `regex`
+   * - Email / PhoneNumber / URL: `email`, `businessEmail`, `phoneNumber`, `url`
+   * - numeric: `min`, `max`
+   * - Date / DateTime: `minDate`, `maxDate`
+   * - Time: `minTime`, `maxTime`
+   * - Year: `minYear`, `maxYear`
+   * - MultiSelect / User: `minSelected`, `maxSelected`
+   * - Attachment: `fileTypes`, `fileSize`, `fileCount`
+   */
+  type:
     | 'minLength'
     | 'maxLength'
+    | 'startsWith'
+    | 'endsWith'
+    | 'includes'
+    | 'notIncludes'
+    | 'regex'
     | 'email'
+    | 'businessEmail'
+    | 'phoneNumber'
     | 'url'
-    | 'custom';
-  /** Validator parameter value (e.g., min/max number, pattern string). */
-  value?: string | number | null;
-  /** Custom error message for validation failure. */
+    | 'min'
+    | 'max'
+    | 'minDate'
+    | 'maxDate'
+    | 'minTime'
+    | 'maxTime'
+    | 'minYear'
+    | 'maxYear'
+    | 'minSelected'
+    | 'maxSelected'
+    | 'fileTypes'
+    | 'fileSize'
+    | 'fileCount';
+  /**
+   * Validator parameter. Number for `minLength`, `maxLength`, `min`, `max`, `minYear`, `maxYear`, `minSelected`, `maxSelected`, `fileCount`, `fileSize` (kilobytes, whatever `unit` says). String for `startsWith`, `endsWith`, `includes`, `notIncludes`, `minDate`, `maxDate`, `minTime`, `maxTime`. Array of MIME patterns (`image/*`, `application/pdf`) for `fileTypes`. Omitted for `email`, `businessEmail`, `phoneNumber`, `url`, which are presence toggles, and for `regex`, which reads `regex` instead.
+   *
+   * An empty string or explicit null disables the rule.
+   */
+  value?: string | number | any[] | null;
+  /** Error message shown when the rule fails. Falls back to a generated message. */
   message?: string;
-  /** Regular expression pattern (for regex validator type). */
+  /** Regular expression pattern. Required when `type` is `regex`, ignored otherwise. Evaluated by the form renderer in the browser only — the submit endpoint does not re-check it, because an author-supplied backtracking pattern would stall the server. */
   regex?: string;
+  /** `fileSize` only — the unit the limit was authored in. `value` is stored in kilobytes either way; this only controls how the limit is displayed. */
+  unit?: 'KB' | 'MB';
 }
 
 /**
@@ -608,8 +643,33 @@ export interface FormFieldConfigV3Type {
   is_list?: boolean;
   /** Whether to limit selectable options. */
   is_limit_option?: boolean;
-  /** List of validators for the field. */
+  /** List of validators for the field. Evaluated by the Enterprise form renderer only; the community edition ignores them. */
   validators?: FormFieldValidatorV3Type[];
+}
+
+/**
+ * An image attached to a form (banner or logo).
+ */
+export interface FormImageV3Type {
+  /**
+   * Publicly reachable image URL.
+   * @format uri
+   */
+  url?: string;
+  /** Storage path, for images already uploaded to this instance. */
+  path?: string;
+  /** Display title. */
+  title?: string;
+  /** MIME type of the image. */
+  mimetype?: string;
+  /** Size in bytes. */
+  size?: number;
+  /** Icon name shown in place of a thumbnail. */
+  icon?: string;
+  /** Read-only. Signed URL generated on read; ignored on write. */
+  signedUrl?: string;
+  /** Read-only. Signed path generated on read; ignored on write. */
+  signedPath?: string;
 }
 
 /**
@@ -2336,7 +2396,7 @@ export type FieldUpdateV3Type = FieldBaseV3Type &
       }
     | {
         type?: 'Currency';
-        /** Currency settings for this column. Locale defaults to `en-US` and currency code defaults to `USD` */
+        /** Currency settings for this column. `currency_locale` defaults to `en-US` and `currency_code` defaults to `USD` */
         options?: FieldOptionsCurrencyV3Type;
       }
     | {
@@ -2442,7 +2502,7 @@ export type FieldV3Type = FieldBaseV3Type &
       }
     | {
         type?: 'Currency';
-        /** Currency settings for this column. Locale defaults to `en-US` and currency code defaults to `USD` */
+        /** Currency settings for this column. `currency_locale` defaults to `en-US` and `currency_code` defaults to `USD` */
         options?: FieldOptionsCurrencyV3Type;
       }
     | {
@@ -2500,10 +2560,14 @@ export interface FieldOptionsLinkToAnotherRecordV3Type {
    * - `mo` many-to-one
    * - `mm` many-to-many
    * - `oo` one-to-one
+   * - `hm` has-many
+   * - `bt` belongs-to
    */
-  relation_type: string;
+  relation_type: 'om' | 'mo' | 'mm' | 'oo' | 'hm' | 'bt';
   /** Identifier of the linked table. */
   related_table_id: string;
+  /** Apply the link's configured filters when resolving linked records. */
+  enable_conditions?: boolean;
 }
 
 export interface FieldOptionsLinksV3Type {
@@ -2515,10 +2579,14 @@ export interface FieldOptionsLinksV3Type {
    * - `mo` many-to-one
    * - `mm` many-to-many
    * - `oo` one-to-one
+   * - `hm` has-many
+   * - `bt` belongs-to
    */
-  relation_type: string;
+  relation_type: 'om' | 'mo' | 'mm' | 'oo' | 'hm' | 'bt';
   /** Identifier of the linked table. */
   related_table_id: string;
+  /** Apply the link's configured filters when resolving linked records. */
+  enable_conditions?: boolean;
 }
 
 export type FieldOptionsButtonV3Type =
@@ -2550,7 +2618,12 @@ export type FieldOptionsButtonV3Type =
       /** Button type: webhook */
       type: 'webhook';
       /** ID of the webhook to trigger */
-      button_hook_id: string;
+      webhook_id: string;
+      /**
+       * Deprecated alias of `webhook_id`, accepted on write and normalised to it. Responses always use `webhook_id`.
+       * @deprecated
+       */
+      button_hook_id?: string;
       /** Label of the button */
       label?: string;
       /** Icon of the button */
@@ -2621,6 +2694,30 @@ export type FieldOptionsButtonV3Type =
         | 'gray';
       /** Theme of the button */
       theme?: 'solid' | 'light' | 'text';
+    }
+  | {
+      /** Button type: url */
+      type: 'url';
+      /** Formula that produces the URL to open */
+      formula: string;
+      /** Label of the button */
+      label?: string;
+      /** Icon of the button */
+      icon?: string;
+      /** Color of the button */
+      color?:
+        | 'brand'
+        | 'red'
+        | 'green'
+        | 'maroon'
+        | 'blue'
+        | 'orange'
+        | 'pink'
+        | 'purple'
+        | 'yellow'
+        | 'gray';
+      /** Theme of the button */
+      theme?: 'solid' | 'light' | 'text';
     };
 
 export interface FieldOptionsRollupV3Type {
@@ -2640,6 +2737,14 @@ export interface FieldOptionsRollupV3Type {
     | 'avgDistinct';
   /** Error message when dependent field is deleted */
   error?: string;
+  /**
+   * Number of decimal places for numeric rollups. Defaults to 0.
+   * @min 0
+   * @max 5
+   */
+  precision?: number;
+  /** Apply the linked field's filters when computing the rollup. */
+  enable_conditions?: boolean;
   /** Thousand/decimal separator style for numeric rollups. `locale` uses the runtime locale, `none_period` / `none_comma` disable thousand grouping. */
   separator?:
     | 'locale'
@@ -2658,16 +2763,61 @@ export interface FieldOptionsLookupV3Type {
   related_table_lookup_field_id: string;
   /** Error message when dependent field is deleted */
   error?: string;
+  /** Apply the linked field's filters when resolving the lookup. */
+  enable_conditions?: boolean;
+  /** Maximum number of linked records to resolve. */
+  lookup_limit?: number;
+  /** Resolve lookups of lookups recursively. */
+  use_recursive_evaluation?: boolean;
+  /** Field type the looked-up value is rendered as. Null renders the raw value. */
+  display_type?: string | null;
+  /** Field options applied to the rendered value, shaped like the `display_type` field's own options. */
+  display_column_meta?: object;
 }
 
 export interface FieldOptionsUserV3Type {
   /** Allow selecting multiple users. */
   allow_multiple_users?: boolean;
+  /** Notify the user when they are assigned to a record. */
+  notify?: boolean;
+}
+
+export interface FieldOptionsLastModifiedByV3Type {
+  /** Allow selecting multiple users. */
+  allow_multiple_users?: boolean;
+  /** Notify the user when they are assigned to a record. */
+  notify?: boolean;
+}
+
+export interface FieldOptionsCreatedByV3Type {
+  /** Allow selecting multiple users. */
+  allow_multiple_users?: boolean;
+  /** Notify the user when they are assigned to a record. */
+  notify?: boolean;
+}
+
+export interface FieldOptionsAttachmentV3Type {
+  /**
+   * Maximum number of files per cell.
+   * @min 1
+   */
+  max_number_of_attachments?: number;
+  /**
+   * Maximum size per file, in megabytes.
+   * @min 1
+   */
+  max_attachment_size?: number;
+  /** Allowed MIME types. `*` allows everything. */
+  supported_attachment_mime_types?: string[];
 }
 
 export interface FieldOptionsFormulaV3Type {
   /** Formula expression. */
   formula?: string;
+  /** Field type the formula result is rendered as. Null renders the raw result. */
+  display_type?: string | null;
+  /** Field options applied to the rendered result, shaped like the `display_type` field's own options. */
+  display_column_meta?: object;
 }
 
 export interface FieldOptionsQrCodeV3Type {
@@ -2677,7 +2827,7 @@ export interface FieldOptionsQrCodeV3Type {
 
 export interface FieldOptionsBarcodeV3Type {
   /** Barcode format (e.g., CODE128). */
-  format?: string;
+  barcode_format?: string;
   /** Field ID that contains the value. */
   barcode_value_field_id?: string;
 }
@@ -2702,8 +2852,8 @@ export interface FieldOptionsCheckboxV3Type {
     | 'thumbs-up'
     | 'flag';
   /**
-   * Specifies icon color using a hexadecimal color code (e.g., `#36BFFF`).
-   * @pattern ^#[0-9A-Fa-f]{6}$
+   * Specifies icon color using a hexadecimal color code (e.g., `#36BFFF`). 3-, 6- and 8-digit (with alpha) forms are accepted.
+   * @pattern ^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6}|[0-9A-Fa-f]{8})$
    */
   color?: string;
 }
@@ -2725,8 +2875,8 @@ export interface FieldOptionsRatingV3Type {
    */
   max_value?: number;
   /**
-   * Specifies icon color using a hexadecimal color code (e.g., `#36BFFF`).
-   * @pattern ^#[0-9A-Fa-f]{6}$
+   * Specifies icon color using a hexadecimal color code (e.g., `#36BFFF`). 3-, 6- and 8-digit (with alpha) forms are accepted.
+   * @pattern ^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6}|[0-9A-Fa-f]{8})$
    */
   color?: string;
 }
@@ -2832,16 +2982,28 @@ export interface FieldOptionsPercentV3Type {
    * - `circle`
    */
   shape?: 'bar' | 'circle';
+  /**
+   * Number of decimal places. Defaults to 2.
+   * @min 0
+   * @max 5
+   */
+  precision?: number;
 }
 
 /**
- * Currency settings for this column. Locale defaults to `en-US` and currency code defaults to `USD`
+ * Currency settings for this column. `currency_locale` defaults to `en-US` and `currency_code` defaults to `USD`
  */
 export interface FieldOptionsCurrencyV3Type {
   /** Locale for currency formatting. Refer https://simplelocalize.io/data/locales/ */
-  locale?: string;
+  currency_locale?: string;
+  /**
+   * Number of decimal places. Defaults to 2.
+   * @min 0
+   * @max 5
+   */
+  precision?: number;
   /** Currency code. Refer https://simplelocalize.io/data/locales/ */
-  code?:
+  currency_code?:
     | 'AED'
     | 'AFN'
     | 'ALL'
@@ -3059,17 +3221,17 @@ export interface FieldOptionsNumberV3Type {
 
 export interface FieldOptionsEmailV3Type {
   /** Enable validation for Email. */
-  validation?: boolean;
+  validate?: boolean;
 }
 
 export interface FieldOptionsURLV3Type {
   /** Enable validation for URL. */
-  validation?: boolean;
+  validate?: boolean;
 }
 
 export interface FieldOptionsPhoneNumberV3Type {
   /** Enable validation for phone numbers. */
-  validation?: boolean;
+  validate?: boolean;
 }
 
 export interface FieldOptionsLongTextV3Type {
@@ -3077,6 +3239,8 @@ export interface FieldOptionsLongTextV3Type {
   rich_text?: boolean;
   /** Enable text generation for this field using NocoAI. */
   generate_text_using_ai?: boolean;
+  /** Enable smart text mode. */
+  smart_mode?: boolean;
 }
 
 export type TableFieldBaseCreateV3Type = FieldBaseV3Type & {
@@ -3631,19 +3795,13 @@ export interface ViewOptionsFormV3Type {
   form_hide_banner?: boolean;
   /** Whether to hide branding on the form. */
   form_hide_branding?: boolean;
+  /** Banner image for the form. A bare URL string is accepted and normalized into an attachment object. */
+  banner?: string | FormImageV3Type | null;
+  /** Logo for the form. A bare URL string is accepted and normalized into an attachment object. */
+  logo?: string | FormImageV3Type | null;
   /**
-   * URL of the banner image for the form.
-   * @format uri
-   */
-  banner?: string;
-  /**
-   * URL of the logo for the form.
-   * @format uri
-   */
-  logo?: string;
-  /**
-   * Background color for the form.
-   * @pattern ^#[0-9A-Fa-f]{6}$
+   * Background color for the form. 3-, 6- and 8-digit (with alpha) forms are accepted.
+   * @pattern ^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6}|[0-9A-Fa-f]{8})$
    */
   form_background_color?: string;
   /**
@@ -5464,7 +5622,7 @@ export interface FilterReqType {
   /** Is this filter grouped? */
   is_group?: BoolType;
   /** Logical Operator */
-  logical_op?: 'and' | 'not' | 'or';
+  logical_op?: 'and' | 'not' | 'or' | null | ('and' | 'not' | ('or' & null));
   /** The filter value. Can be NULL for some operators. */
   value?: any;
   /** Whether this filter is enabled. Disabled filters are skipped during evaluation. */
@@ -7025,7 +7183,7 @@ export interface BaseType {
    * @example nc_vm5q__
    */
   prefix?: string;
-  type?: 'database' | 'documentation' | 'dashboard';
+  type?: 'database' | 'documentation' | 'dashboard' | 'code';
   /** List of linked Database Projects that this base has access to (only used in Dashboard bases so far) */
   linked_db_projects?: BaseType[];
   status?: string;
@@ -15909,6 +16067,43 @@ export class Api<
          * @example S256
          */
         code_challenge_method?: 'S256' | 'plain';
+        /**
+         * Space-delimited capability scopes the client is requesting, each '<category>:<level>' with level read, write or delete (e.g. records:read). When present the consent is locked to exactly these permissions and records no tools. EE only.
+         * @example records:read tables:read
+         */
+        scope?: string;
+        /**
+         * Workspace the consent is limited to. EE only.
+         * @example w1a2b3c4
+         */
+        workspace_id?: string;
+        /**
+         * Base the consent is pinned to, granting the user's full authority over it. Mutually exclusive with scopes.
+         * @example p1a2b3c4d5e6f7g
+         */
+        base_id?: string;
+        /**
+         * RFC 8707 resource indicator, echoed back on the issued token.
+         * @example https://app.nocodb.com/mcp
+         */
+        resource?: string;
+        /** Resources this authorization may reach. Mutually exclusive with base_id. EE only; ignored on CE, where no scope model exists. */
+        scopes?: {
+          /** Kind of resource this scope names */
+          resource_type: 'base' | 'workspace' | 'all';
+          /**
+           * Id of the resource, or '*' for an 'all' scope
+           * @example p1a2b3c4d5e6f7g
+           */
+          resource_id: string;
+          /** Permission categories granted on this resource. Omitted means every category the resource type allows. */
+          permissions?: Record<string, any>;
+        }[];
+        /**
+         * MCP tool allowlist for this authorization. Every name must exist in the server's tool catalog. Only meaningful alongside scopes.
+         * @example ["listTables","listRecords"]
+         */
+        tools?: string[];
       },
       params: RequestParams = {}
     ) =>
