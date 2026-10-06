@@ -1,3 +1,5 @@
+// Must stay first — loads .env before any import reads process.env.
+import '~/load-env';
 import dns from 'node:dns';
 import express from 'express';
 import cors from 'cors';

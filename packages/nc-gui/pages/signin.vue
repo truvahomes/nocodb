@@ -146,7 +146,7 @@ function navigateForgotPassword() {
               </template>
               <a
                 v-if="appInfo.googleAuthEnabled"
-                :href="`${appInfo.ncSiteUrl}/auth/google`"
+                :href="authEntryUrl(api.instance.defaults.baseURL, '/auth/google')"
                 class="scaling-btn bg-opacity-100 after:(!bg-nc-bg-default) !text-primary !no-underline"
               >
                 <span class="flex items-center gap-2">
@@ -160,7 +160,7 @@ function navigateForgotPassword() {
                 v-if="appInfo.oidcAuthEnabled"
                 class="self-center flex flex-col flex-wrap gap-4 items-center mt-4 justify-center"
               >
-                <a :href="`${appInfo.ncSiteUrl}/auth/oidc`" class="!text-primary !no-underline">
+                <a :href="authEntryUrl(api.instance.defaults.baseURL, '/auth/oidc')" class="!text-primary !no-underline">
                   <button type="button" class="scaling-btn bg-opacity-100">
                     <span class="flex items-center gap-2">
                       <MdiLogin />

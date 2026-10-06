@@ -128,6 +128,23 @@ export function getFormulaTextSegments(anchorLinkHTML: string) {
   return result
 }
 
+/**
+ * Base URL for backend auth entry routes (`/auth/google`, `/auth/oidc`).
+ *
+ * These are server routes, so they must resolve against the API origin rather
+ * than `appInfo.ncSiteUrl` (the browser-facing site URL). The two are identical
+ * in a single-origin deployment, but diverge whenever the GUI is served
+ * separately — local dev runs the SPA on :3000 and the API on :8080 — where
+ * `ncSiteUrl` points the browser at the SPA. The SPA has no `/auth/*` route, so
+ * it serves the index shell and the auth guard bounces straight back to
+ * /signin, which looks like the sign-in button doing nothing.
+ *
+ * Trailing slashes are stripped: a baseURL of '/' must yield '/auth/google',
+ * not '//auth/google', which a browser resolves as a protocol-relative URL.
+ */
+export const authEntryUrl = (apiBaseUrl: string | undefined, path: string): string =>
+  `${(apiBaseUrl || '').replace(/\/+$/, '')}${path}`
+
 export const openLink = (path: string, baseURL?: string, target = '_blank') => {
   try {
     const url = new URL(path, baseURL)
