@@ -1,3 +1,6 @@
+// Must stay first — loads .env before any import reads process.env.
+import '~/load-env';
+
 // todo: move to env
 // defining at the top to override the default value in app.config.ts
 process.env.NC_DASHBOARD_URL = process.env.NC_DASHBOARD_URL ?? '/';

@@ -31,6 +31,11 @@ import { RedisIoAdapter } from '~/gateways/RedisIoAdapter';
 import { DEFAULT_APP_SETTINGS } from '~/interface/AppSettings';
 import { NC_APP_SETTINGS } from '~/constants';
 
+// Entry points import `~/load-env` before anything else; this is a safety net
+// for consumers that import Noco directly. dotenv does not override existing
+// keys, so the second call is a no-op. It cannot replace the entry-point import
+// — by the time this module body runs, the imports above have already been
+// evaluated, and any that read `process.env` at module load would see nothing.
 dotenv.config();
 declare const module: any;
 
