@@ -141,6 +141,13 @@ export default class Model implements TableType {
 
   synced?: boolean;
 
+  /**
+   * CSV of `DisabledActionsType` naming the record actions switched off for this
+   * table (e.g. `"INSERT,UPDATE,DELETE"`). Applies to everyone regardless of
+   * role — a hard switch, not a role grant like `nc_permissions`.
+   */
+  disabled_actions?: string;
+
   get context(): NcContext {
     const ctx = getModelContext(this);
     if (ctx) return ctx;
@@ -275,6 +282,7 @@ export default class Model implements TableType {
       'id',
       'meta',
       'synced',
+      'disabled_actions',
     ]);
 
     insertObj.mm = !!insertObj.mm;
@@ -1461,10 +1469,16 @@ export default class Model implements TableType {
   static async updateMeta(
     context: NcContext,
     tableId: string,
-    model: Pick<TableReqType, 'meta' | 'description'>,
+    model: Pick<TableReqType, 'meta' | 'description'> & {
+      disabled_actions?: string;
+    },
     ncMeta = Noco.ncMeta,
   ) {
-    const updateObj = extractProps(model, ['description', 'meta']);
+    const updateObj = extractProps(model, [
+      'description',
+      'meta',
+      'disabled_actions',
+    ]);
 
     // set meta
     const res = await ncMeta.metaUpdate(

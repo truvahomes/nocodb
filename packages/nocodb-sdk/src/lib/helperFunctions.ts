@@ -1,6 +1,10 @@
 import UITypes, { isLinksOrLTAR, isNumericCol, isVirtualCol } from './UITypes';
 import { RelationTypes, RolesObj, RolesType } from './globals';
-import { ClientType, IntegrationCategoryType } from './enums';
+import {
+  ClientType,
+  DisabledActionsType,
+  IntegrationCategoryType,
+} from './enums';
 import {
   ColumnType,
   FormulaType,
@@ -307,6 +311,24 @@ function roundUpToPrecision(number: number, precision: number = 0) {
   return Math.round(number).toFixed(precision);
 }
 
+/**
+ * Whether `action` appears in a `disabled_actions` CSV (e.g. `"INSERT,DELETE"`).
+ *
+ * Shared by the backend write guard and the frontend permission checks so the
+ * two cannot disagree about what a given CSV means. An absent or empty CSV
+ * disables nothing.
+ */
+const isActionDisabled = (
+  disabledActions: string | null | undefined,
+  action: DisabledActionsType | null | undefined
+): boolean => {
+  if (!disabledActions || !action) return false;
+
+  return disabledActions
+    .split(',')
+    .some((entry) => entry.trim().toUpperCase() === action);
+};
+
 export {
   filterOutSystemColumns,
   getSystemColumnsIds,
@@ -326,6 +348,7 @@ export {
   getRollupColumnMeta,
   populateUniqueFileName,
   roundUpToPrecision,
+  isActionDisabled,
 };
 
 const testDataBaseNames = {

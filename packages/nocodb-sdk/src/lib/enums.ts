@@ -724,6 +724,16 @@ export enum SourceRestriction {
   DATA_READONLY = 'is_data_readonly',
 }
 
+/**
+ * A record action that can be switched off wholesale on a table or a field via
+ * the `disabled_actions` CSV column, for everyone regardless of role.
+ */
+export enum DisabledActionsType {
+  INSERT = 'INSERT',
+  UPDATE = 'UPDATE',
+  DELETE = 'DELETE',
+}
+
 export enum ClientType {
   MYSQL = 'mysql2',
   PG = 'pg',

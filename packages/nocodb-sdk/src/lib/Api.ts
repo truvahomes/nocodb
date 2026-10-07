@@ -5245,6 +5245,12 @@ export interface ColumnType {
   visible?: BoolType;
   /** Is this column readonly? */
   readonly?: BoolType;
+  /**
+   * Comma-separated list of record actions disabled for this field, for everyone
+   * regardless of role.
+   * @example "INSERT,UPDATE"
+   */
+  disabled_actions?: string;
 }
 
 /**
@@ -7644,6 +7650,12 @@ export interface TableType {
   type?: string;
   /** Is this table synced? */
   synced?: BoolType;
+  /**
+   * Comma-separated list of record actions disabled for this table, for everyone
+   * regardless of role.
+   * @example "INSERT,UPDATE,DELETE"
+   */
+  disabled_actions?: string;
   /** Is record trash disabled for this table? */
   trash_disabled?: BoolType;
   /** Custom trash retention period in days. null = use default. */
