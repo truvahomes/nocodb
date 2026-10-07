@@ -19,6 +19,7 @@ import type {
   InviteLinkRole,
   InviteLinkType,
   InviteLinkUnusableReason,
+  ProjectUserReqType,
   WorkspaceUserRoles,
 } from 'nocodb-sdk';
 import type { NcContext, NcRequest } from '~/interface/config';
@@ -931,8 +932,8 @@ export class InviteLinksService {
 
     const baseContext = {
       ...context,
-      base_id: link.base_id,
-      workspace_id: link.fk_workspace_id,
+      base_id: link.base_id as string,
+      workspace_id: link.fk_workspace_id as string,
     };
 
     const base = await this.assertBaseShareable(
@@ -972,8 +973,10 @@ export class InviteLinksService {
       this.appHooksService.emit(AppEvents.PROJECT_USER_UPDATE, {
         base,
         user,
-        baseUser: { roles: link.role as ProjectRoles },
-        oldBaseUser: { roles: existing.roles as ProjectRoles },
+        baseUser: { roles: link.role as ProjectUserReqType['roles'] },
+        oldBaseUser: {
+          roles: existing.roles as ProjectUserReqType['roles'],
+        },
         via: 'invite_link',
         context: baseContext,
         req: param.req,

@@ -2076,8 +2076,12 @@ async function handleMouseUp(e: MouseEvent, _elementMap: CanvasElement) {
 
         if (selectedTemplate.value) {
           await onSelectedTemplateClick()
-        } else {
+        } else if (isAddNewRecordGridMode.value) {
           await addEmptyRow()
+        } else {
+          // Form-first mode: the "+" row opens the expanded record instead of
+          // committing a blank row, matching the add-record button.
+          await openNewRecordHandler({ overwrite: {}, path: [] })
         }
       }
     }

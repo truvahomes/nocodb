@@ -437,6 +437,11 @@ export const presetErrorCodexMap: Partial<
     message: 'Cannot calculate intermediate order',
     code: 400,
   },
+  [NcErrorType.ERR_DISABLED_ACTION]: {
+    message: (action: string, entityType: string, entityName: string) =>
+      `Action '${action}' is disabled for ${entityType} '${entityName}'`,
+    code: 400,
+  },
   [NcErrorType.ERR_PLAN_LIMIT_EXCEEDED]: {
     message: (message: string) => message || 'Plan limit exceeded',
     code: 403,

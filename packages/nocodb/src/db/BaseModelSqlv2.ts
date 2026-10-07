@@ -15,10 +15,12 @@ import {
   ClientType,
   convertDurationToSeconds,
   CURRENT_USER_TOKEN,
+  DisabledActionsType,
   EventType,
   extractFilterFromXwhere,
   extractRolesObj,
   isAIPromptCol,
+  isActionDisabled,
   isAttachment,
   isBtLikeV2Junction,
   isCreatedOrLastModifiedByCol,
@@ -2227,6 +2229,8 @@ class BaseModelSqlv2 implements IBaseModelSqlV2 {
   }
 
   async insert(data, request: NcRequest, trx?, _disableOptimization = false) {
+    await this.validateDisabledActions(DisabledActionsType.INSERT, data);
+
     return await baseModelInsert(this).single(
       data,
       request,
@@ -2238,6 +2242,8 @@ class BaseModelSqlv2 implements IBaseModelSqlV2 {
   async delByPk(id, _trx?, cookie?) {
     let trx: Knex.Transaction | null = _trx;
     try {
+      await this.validateDisabledActions(DisabledActionsType.DELETE);
+
       const source = await this.getSource();
       // retrieve data for handling params in hook
       const data = await this.readRecord({
@@ -2777,6 +2783,8 @@ class BaseModelSqlv2 implements IBaseModelSqlV2 {
     { typecast = false }: { typecast?: boolean } = {},
   ) {
     try {
+      await this.validateDisabledActions(DisabledActionsType.UPDATE, data);
+
       const columns = await this.model.getColumns();
 
       const updateObj = await this.model.mapAliasToColumn(
@@ -2983,6 +2991,8 @@ class BaseModelSqlv2 implements IBaseModelSqlV2 {
   async nestedInsert(data, request: NcRequest, _trx = null, param?) {
     // const driver = trx ? trx : await this.dbDriver.transaction();
     try {
+      await this.validateDisabledActions(DisabledActionsType.INSERT, data);
+
       const source = await this.getSource();
 
       const columns = await this.model.getColumns();
@@ -3563,6 +3573,12 @@ class BaseModelSqlv2 implements IBaseModelSqlV2 {
   ) {
     let trx;
     try {
+      // Upsert both inserts and updates, so both must be permitted.
+      for (const data of datas ?? []) {
+        await this.validateDisabledActions(DisabledActionsType.INSERT, data);
+        await this.validateDisabledActions(DisabledActionsType.UPDATE, data);
+      }
+
       const columns = await this.model.getColumns();
 
       let order = await this.getHighestOrderInTable();
@@ -4384,6 +4400,10 @@ class BaseModelSqlv2 implements IBaseModelSqlV2 {
       skipAttachmentOwnershipCheck?: boolean;
     },
   ) {
+    for (const d of datas ?? []) {
+      await this.validateDisabledActions(DisabledActionsType.INSERT, d);
+    }
+
     return await baseModelInsert(this).bulk(datas, params);
   }
 
@@ -4420,6 +4440,10 @@ class BaseModelSqlv2 implements IBaseModelSqlV2 {
     const profiler = Profiler.start(`base-model/bulkUpdate`);
 
     try {
+      for (const d of datas ?? []) {
+        await this.validateDisabledActions(DisabledActionsType.UPDATE, d);
+      }
+
       const columns = await this.model.getColumns();
 
       // validate update data
@@ -4687,6 +4711,8 @@ class BaseModelSqlv2 implements IBaseModelSqlV2 {
     },
   ) {
     try {
+      await this.validateDisabledActions(DisabledActionsType.UPDATE, data);
+
       let count = 0;
 
       const columns = await this.model.getColumns();
@@ -5009,6 +5035,8 @@ class BaseModelSqlv2 implements IBaseModelSqlV2 {
       allowSystemColumn?: boolean;
     } = {},
   ) {
+    await this.validateDisabledActions(DisabledActionsType.DELETE);
+
     const columns = await this.model.getColumns();
 
     // Each record to delete must be an object carrying its primary key(s)
@@ -5563,6 +5591,8 @@ class BaseModelSqlv2 implements IBaseModelSqlV2 {
       skipPermissionCheck?: boolean;
     },
   ) {
+    await this.validateDisabledActions(DisabledActionsType.DELETE);
+
     return await new BaseModelDelete(this).bulkAll({
       args,
       cookie,
@@ -10608,14 +10638,59 @@ class BaseModelSqlv2 implements IBaseModelSqlV2 {
   async statsUpdate(_args: { count: number }) {}
 
   /**
+   * Refuse the write if `action` is switched off on this table, or on any field
+   * the payload touches, via the `disabled_actions` CSV.
+   *
+   * Unlike `checkPermission`, this ignores the caller entirely: a disabled
+   * action is disabled for everyone, including owners and system writes. It is
+   * a schema-level switch, which is why it is enforced here rather than being
+   * modelled as an `nc_permissions` grant to nobody.
+   *
+   * `data`, when given, limits the field scan to the columns actually being
+   * written — the table-level check always runs.
+   */
+  protected async validateDisabledActions(
+    action: DisabledActionsType,
+    data?: Record<string, any>,
+  ) {
+    if (isActionDisabled(this.model.disabled_actions, action)) {
+      NcError.get(this.context).disabledAction(
+        action,
+        'table',
+        this.model.title,
+      );
+    }
+
+    // DELETE removes whole records, so no field is singled out.
+    if (!data || action === DisabledActionsType.DELETE) return;
+
+    const columns = await this.model.getColumns();
+
+    for (const column of columns) {
+      if (!isActionDisabled(column.disabled_actions, action)) continue;
+
+      // The payload may be keyed by either alias or physical column name
+      // depending on how far through mapAliasToColumn the caller is.
+      const isTouched =
+        (column.title && column.title in data) ||
+        (column.column_name && column.column_name in data);
+
+      if (isTouched) {
+        NcError.get(this.context).disabledAction(action, 'field', column.title);
+      }
+    }
+  }
+
+  /**
    * Gate a write on the `nc_permissions` rules configured for this base.
    *
    * Truva: upstream leaves this body empty — the permission *shape* ships in
    * Community Edition but the enforcement is Enterprise-only. We implement it
-   * here, which is what the fork's old `disabled_actions` CSV column on
-   * MODELS/COLUMNS used to do. Living inside this hook (rather than in a
-   * parallel column read from ~12 bespoke call sites) means upstream keeps
-   * maintaining the call sites for us.
+   * here. Living inside this hook (rather than at ~12 bespoke call sites) means
+   * upstream keeps maintaining the call sites for us.
+   *
+   * This is the role-aware half of write gating; `validateDisabledActions` is
+   * the unconditional half.
    *
    * Fails open on unexpected errors: a malformed permission row must not brick
    * every write to a base. An *applicable and unsatisfied* rule still throws.
@@ -10628,6 +10703,32 @@ class BaseModelSqlv2 implements IBaseModelSqlV2 {
     req: any;
   }) {
     const { entity, entityId, permission, user } = params;
+
+    // A disabled action binds everyone, so this runs before the `!user` bail
+    // below. Every field-level write (cell edit, link add/remove/reorder)
+    // already funnels through here, so folding the check in covers them all
+    // without a second set of call sites to keep in step with upstream.
+    if (
+      entity === PermissionEntity.FIELD &&
+      permission === PermissionKey.RECORD_FIELD_EDIT
+    ) {
+      await this.model.getColumns();
+
+      for (const id of Array.isArray(entityId) ? entityId : [entityId]) {
+        const column = id && this.model.columnsById[id];
+
+        if (
+          column &&
+          isActionDisabled(column.disabled_actions, DisabledActionsType.UPDATE)
+        ) {
+          NcError.get(this.context).disabledAction(
+            DisabledActionsType.UPDATE,
+            'field',
+            column.title,
+          );
+        }
+      }
+    }
 
     // System/internal writes (migrations, meta sync, background jobs) carry no
     // user and must not be gated — only user-initiated requests are.

@@ -72,7 +72,13 @@ export function useGlobalState(storageKey = 'nocodb-gui-v2'): State {
       old: INITIAL_LEFT_SIDEBAR_WIDTH,
       current: INITIAL_LEFT_SIDEBAR_WIDTH,
     },
-    isAddNewRecordGridMode: true,
+    // Truva: adding a record opens the expanded-record modal rather than
+    // inserting a blank inline row. Users can still opt into inline rows via
+    // the add-record dropdown, and that choice persists from then on.
+    isAddNewRecordGridMode: false,
+    // Must default to false: `mergeDefaults` fills absent keys, so this is how
+    // a browser carrying the old `isAddNewRecordGridMode: true` is detected.
+    isAddNewRecordModeDefaultApplied: false,
     syncDataUpvotes: [],
     giftBannerDismissedCount: 0,
     isLeftSidebarOpen: !isViewPortMobile(),
@@ -84,6 +90,18 @@ export function useGlobalState(storageKey = 'nocodb-gui-v2'): State {
 
   /** force turn off of dark mode, regardless of previously stored settings */
   storage.value.darkMode = false
+
+  /**
+   * Truva: one-time migration to the form-first add-record default.
+   *
+   * `mergeDefaults` only fills in absent keys, so a browser that already
+   * persisted the old `isAddNewRecordGridMode: true` would keep inserting
+   * inline rows forever. Reset it once, then leave the user's choice alone.
+   */
+  if (!storage.value.isAddNewRecordModeDefaultApplied) {
+    storage.value.isAddNewRecordGridMode = false
+    storage.value.isAddNewRecordModeDefaultApplied = true
+  }
 
   /** current token ref, used by `useJwt` to reactively parse our token payload */
   /**

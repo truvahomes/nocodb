@@ -133,6 +133,12 @@ export default class Column<T = any> implements ColumnType {
   public deleted?: boolean;
   public readonly?: boolean;
 
+  /**
+   * CSV of `DisabledActionsType` naming the record actions switched off for this
+   * field (e.g. `"INSERT,UPDATE"`). Applies to everyone regardless of role.
+   */
+  public disabled_actions?: string;
+
   // we create custom index when custom link created using the column
   public custom_index_name?: boolean;
 
@@ -204,6 +210,7 @@ export default class Column<T = any> implements ColumnType {
       'virtual',
       'description',
       'readonly',
+      'disabled_actions',
     ]);
 
     if (!insertObj.column_name) {
@@ -1575,6 +1582,7 @@ export default class Column<T = any> implements ColumnType {
       'meta',
       'internal_meta', // Internal field for constraint metadata (not exposed via API)
       'readonly',
+      'disabled_actions',
     ]);
 
     if (column.validate) {

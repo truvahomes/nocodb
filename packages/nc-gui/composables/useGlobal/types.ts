@@ -102,6 +102,12 @@ export interface StoredState {
     current: number
   }
   isAddNewRecordGridMode: boolean
+  /**
+   * Truva: marks that the stored `isAddNewRecordGridMode` has been migrated to
+   * the form-first default. Without this, browsers that already persisted the
+   * old `true` would keep inserting inline rows and never see the new default.
+   */
+  isAddNewRecordModeDefaultApplied: boolean
   syncDataUpvotes: string[]
   giftBannerDismissedCount: number
   isLeftSidebarOpen: boolean

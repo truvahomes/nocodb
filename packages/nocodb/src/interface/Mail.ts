@@ -8,7 +8,6 @@ import type {
   TableType,
   UITypes,
   UserType,
-  WorkspaceType,
 } from 'nocodb-sdk';
 import type { XcEmailAttachment } from '~/types/nc-plugin';
 
@@ -122,7 +121,9 @@ interface OrganizationInvitePayload {
 }
 
 interface WorkspaceInvitePayload {
-  workspace: WorkspaceType;
+  // Structural workspace shape — decoupled from the SDK's WorkspaceV3Type
+  // (which requires created_at/updated_at not available on the model here).
+  workspace: { id?: string; title?: string };
   user: UserType;
   req: NcRequest;
   token?: string;

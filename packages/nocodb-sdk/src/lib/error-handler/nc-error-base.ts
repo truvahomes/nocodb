@@ -814,6 +814,18 @@ export class NcErrorBase {
     throw this.errorCodex.generateError(NcErrorType.ERR_REORDER_FAILED, {});
   }
 
+  disabledAction(
+    action: string,
+    entityType: string,
+    entityName: string,
+    args?: NcErrorArgs
+  ): never {
+    throw this.errorCodex.generateError(NcErrorType.ERR_DISABLED_ACTION, {
+      params: [action, entityType, entityName],
+      ...(args || {}),
+    });
+  }
+
   integrationLinkedWithMultiple(
     bases: BaseType[],
     sources: SourceType[],
