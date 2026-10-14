@@ -1058,6 +1058,15 @@ export class MetaDiffsService {
               }
 
               column.title = change.column.title;
+              // `columnList` now returns a `meta` object on every column, and
+              // `Column.update` replaces `meta` wholesale — so merge the stored
+              // meta underneath the introspected one instead of letting an
+              // empty `{}` strip NocoDB-only keys. `ag` is the exception: it's
+              // a schema fact read out of `EXTRA`, so it must track the DB
+              // exactly rather than inherit a stale `true`.
+              const dbHasAg = !!column.meta?.ag;
+              column.meta = { ...change.column?.meta, ...column.meta };
+              if (!dbHasAg) delete column.meta.ag;
               await Column.update(context, change.column.id, column);
             }
             break;
@@ -1071,12 +1080,21 @@ export class MetaDiffsService {
               const { ai, rqd, un, unique } = colMeta;
               // pk asymmetry — see `~/services/meta-diffs/pk-preservation`.
               const pk = resolvePkAfterSync(change.column.pk, colMeta.pk);
+              // `Column.update` replaces `meta` wholesale, so carry the stored
+              // meta over or a re-sync would strip NocoDB-only keys. `ag` is
+              // the exception: it's a schema fact the driver reads out of
+              // `EXTRA`, and it's part of `detectColumnSchemaPropsChanged`, so
+              // it has to track the DB exactly — merging a stale `true` back in
+              // would leave the diff permanently pending.
+              const meta = { ...change.column?.meta, ...colMeta?.meta };
+              if (!colMeta?.meta?.ag) delete meta.ag;
               await Column.update(context, change.column.id, {
                 pk,
                 ai,
                 rqd,
                 un,
                 unique,
+                meta,
               });
             }
             break;

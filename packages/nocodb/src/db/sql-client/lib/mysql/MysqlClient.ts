@@ -597,6 +597,7 @@ class MysqlClient extends KnexClient {
    * @returns {string} - columns[].tn,
    * @returns {string} - columns[].unique,
    * @returns {string} - columns[].un
+   * @returns {string} - columns[].meta
    */
   async columnList(args: any = {}) {
     const func = this.columnList.name;
@@ -631,6 +632,7 @@ class MysqlClient extends KnexClient {
             column.generated_expression = response[0][i].generated_expression;
           }
 
+          column.meta = {};
           column.tn = response[0][i].tn;
           column.cn = response[0][i].cn;
           column.cno = response[0][i].cn;
@@ -655,6 +657,19 @@ class MysqlClient extends KnexClient {
 
           response[0][i].cst = response[0][i].cst || ' ';
           column.unique = response[0][i].cst.indexOf('UNIQUE') !== -1;
+
+          // A PK the DB fills itself (e.g. `_id varchar(191) DEFAULT (uuid())`,
+          // reported by MySQL as EXTRA = 'DEFAULT_GENERATED') is auto-generated
+          // but not auto-increment, so `ai` stays false and nothing else marks
+          // it. `meta.ag` is the flag NocoDB already uses for that case: it
+          // makes `isSystemColumn` true (locking the field in the UI), keeps the
+          // column out of the generated API request schema, and routes the
+          // insert through the `ag` branch in `BaseModelSqlv2.insert`, which
+          // reads the row back by the DB-assigned key instead of expecting a
+          // returned `insertId`.
+          if (column.pk && response[0][i].ext.includes('DEFAULT_GENERATED')) {
+            column.meta.ag = true;
+          }
 
           if (column.dt === 'timestamp' || column.dt === 'datetime') {
             if (response[0][i].cdf && response[0][i].ext) {

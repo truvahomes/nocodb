@@ -19,8 +19,9 @@
 /**
  * Subset of column attributes that meta-sync compares against the DB
  * schema: primary key, required (NOT NULL), unsigned, auto-increment,
- * UNIQUE. These are physical / schema-level properties — *not*
- * NocoDB-only metadata such as title, description, or uidt.
+ * UNIQUE, plus the auto-generated marker (`meta.ag`). These are physical /
+ * schema-level properties — *not* NocoDB-only metadata such as title,
+ * description, or uidt.
  */
 export interface ColumnSchemaProps {
   pk?: boolean | null;
@@ -28,6 +29,12 @@ export interface ColumnSchemaProps {
   un?: boolean | null;
   ai?: boolean | null;
   unique?: boolean | null;
+  /**
+   * `meta.ag` marks a PK the DB generates itself (`DEFAULT (uuid())`), which
+   * is a schema fact the driver reads out of `EXTRA`, not a user preference —
+   * so it belongs in this comparison.
+   */
+  meta?: { ag?: boolean | string | null } | null;
 }
 
 /** True when NocoDB has pk and the DB column does not. */
@@ -44,7 +51,7 @@ export function isPkRegression(
  * `TABLE_COLUMN_PROPS_CHANGED` and queue an apply.
  *
  * Compares only physical/constraint-like attributes (pk, rqd, un, ai,
- * unique) — not NocoDB-only metadata such as title or uidt.
+ * unique, meta.ag) — not NocoDB-only metadata such as title or uidt.
  *
  * `pk` regressions alone do NOT fire — see module-level rationale.
  */
@@ -60,7 +67,8 @@ export function detectColumnSchemaPropsChanged(
     !!oldCol.rqd !== !!dbCol.rqd ||
     !!oldCol.un !== !!dbCol.un ||
     !!oldCol.ai !== !!dbCol.ai ||
-    !!oldCol.unique !== !!dbCol.unique
+    !!oldCol.unique !== !!dbCol.unique ||
+    !!oldCol.meta?.ag !== !!dbCol.meta?.ag
   );
 }
 
