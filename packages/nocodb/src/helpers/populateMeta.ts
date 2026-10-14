@@ -10,6 +10,7 @@ import type PGClient from '~/db/sql-client/lib/pg/PgClient';
 import type { NcContext } from '~/interface/config';
 import Source from '~/models/Source';
 import { META_COL_NAME } from '~/constants';
+import { applyDbManagedTimestampUidt } from '~/helpers/dbManagedColumns';
 import { getSourceIntrospectionSchema, normalizeDr } from '~/helpers/dbHelpers';
 import { formatLinkDbMapping } from '~/helpers/formatLinkDbMapping';
 import mapDefaultDisplayValue from '~/helpers/mapDefaultDisplayValue';
@@ -384,6 +385,12 @@ export async function populateMeta(
         } else if (!column.uidt) {
           column.uidt = getColumnUiType(source, column);
         }
+
+        // An externally-managed schema carries created_at/updated_at without
+        // the rest of the NocoDB system-column set, so the branch above skips
+        // it and the columns land as editable DateTime fields. Recover the
+        // read-only typing from the DB's own CURRENT_TIMESTAMP default.
+        applyDbManagedTimestampUidt(column);
       }
 
       mapDefaultDisplayValue(columns);

@@ -29,6 +29,7 @@ import {
   resolvePkAfterSync,
 } from '~/services/meta-diffs/pk-preservation';
 import { formatLinkDbMapping } from '~/helpers/formatLinkDbMapping';
+import { applyDbManagedTimestampUidt } from '~/helpers/dbManagedColumns';
 import NcHelp from '~/utils/NcHelp';
 import NcConnectionMgrv2 from '~/utils/common/NcConnectionMgrv2';
 import Noco from '~/Noco';
@@ -972,8 +973,9 @@ export class MetaDiffsService {
               });
 
               for (const column of columns) {
+                column.uidt = getColumnUiType(source, column);
+                applyDbManagedTimestampUidt(column);
                 await Column.insert(context, {
-                  uidt: getColumnUiType(source, column),
                   fk_model_id: model.id,
                   ...column,
                   title: getColumnNameAlias(column.column_name, source),
@@ -1026,6 +1028,7 @@ export class MetaDiffsService {
               )?.data?.list?.map((c) => ({ ...c, column_name: c.cn }));
               const column = columns.find((c) => c.cn === change.cn);
               column.uidt = getColumnUiType(source, column);
+              applyDbManagedTimestampUidt(column);
               //todo: inflection
               column.title = getColumnNameAlias(column.cn, source);
               await Column.insert(context, {
