@@ -25,10 +25,12 @@ export const useSidebarStore = defineStore('sidebarStore', () => {
   const viewsStore = useViewsStore()
   const { activeViewTitleOrId } = storeToRefs(viewsStore)
 
+  const BASE_OVERVIEW_ROUTE = 'index-typeOrId-baseId-index-index'
+
   const allowHideLeftSidebarForCurrentRoute = computed(() => {
     return (
       [
-        'index-typeOrId-baseId-index-index',
+        BASE_OVERVIEW_ROUTE,
         'index-typeOrId-settings-page',
         'index-typeOrId-baseId-index-settings-page',
         'index-typeOrId-baseId-index-docs',
