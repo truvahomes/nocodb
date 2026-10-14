@@ -15,8 +15,12 @@ import { AttachmentGetOperations } from '~/controllers/internal/modules/Attachme
 import { INTERNAL_API_MODULE_PROVIDER_KEY } from '~/utils/internal-type';
 
 export const InternalApiModules = [
-  McpGetOperations,
-  McpPostOperations,
+  // Token CRUD (`mcpList`/`mcpCreate`/`mcpUpdate`/`mcpDelete`/...). Dropped
+  // alongside the server route under `NC_DISABLE_MCP`, otherwise the UI could
+  // still mint credentials for an endpoint that no longer answers.
+  ...(process.env.NC_DISABLE_MCP === 'true'
+    ? []
+    : [McpGetOperations, McpPostOperations]),
   OAuthGetOperations,
   OAuthPostOperations,
   RecordAuditListOperations,

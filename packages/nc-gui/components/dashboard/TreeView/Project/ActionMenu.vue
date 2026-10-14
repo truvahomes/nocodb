@@ -119,7 +119,12 @@ const isOptionVisible = computed(() => {
       </div>
     </NcMenuItem>
 
-    <NcMenuItem key="mcp" data-testid="nc-sidebar-mcp-server" @click="emits('openMcpServer', base.id!)">
+    <NcMenuItem
+      v-if="appInfo.mcpEnabled"
+      key="mcp"
+      data-testid="nc-sidebar-mcp-server"
+      @click="emits('openMcpServer', base.id!)"
+    >
       <div v-e="['c:base:mcp-server']" class="flex gap-2 items-center">
         <GeneralIcon icon="mcp" />
         {{ $t('title.mcpServer') }}

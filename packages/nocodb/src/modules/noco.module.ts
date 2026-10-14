@@ -247,8 +247,10 @@ export const nocoModuleMetadata = {
           InternalController,
           WorkspaceUsersController,
 
-          // MCP
-          McpController,
+          // MCP. `NC_DISABLE_MCP=true` unregisters the server route, so the
+          // endpoint 404s instead of authenticating a token — see the matching
+          // guards on the internal CRUD operations and on `appInfo.mcpEnabled`.
+          ...(process.env.NC_DISABLE_MCP === 'true' ? [] : [McpController]),
           ViewRowColorController,
 
           /* V3 APIs */

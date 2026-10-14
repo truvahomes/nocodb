@@ -5,7 +5,7 @@ definePageMeta({
 
 const $route = useRoute()
 
-const { signedIn, signOut } = useGlobal()
+const { signedIn, signOut, appInfo } = useGlobal()
 
 const selectedKeys = computed(() => [$route.params.nestedPage ?? $route.params.page])
 
@@ -84,6 +84,7 @@ const logout = async () => {
                 </div>
               </NcMenuItem>
               <NcMenuItem
+                v-if="appInfo.mcpEnabled"
                 key="mcp"
                 :class="{
                   active: $route.params.page === 'mcp',

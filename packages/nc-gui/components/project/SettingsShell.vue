@@ -25,7 +25,7 @@ const { $e } = useNuxtApp()
 
 const { isBaseRolesLoaded } = useRoles()
 
-const { isMobileMode } = useGlobal()
+const { isMobileMode, appInfo } = useGlobal()
 
 const { base } = storeToRefs(useBase())
 
@@ -264,7 +264,7 @@ watch(
 
           <!-- Height-bounded so the pane's own overflow-auto has something to
                resolve h-full against; padding stays inside the pane. -->
-          <div v-else-if="tab === 'mcp' && baseId" class="h-full max-h-full">
+          <div v-else-if="tab === 'mcp' && baseId && appInfo.mcpEnabled" class="h-full max-h-full">
             <DashboardSettingsBaseMCP :base-id="baseId" />
           </div>
 

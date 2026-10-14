@@ -495,6 +495,14 @@ export class UtilsService {
         infer: true,
       }),
       feedEnabled: process.env.NC_DISABLE_PRODUCT_FEED !== 'true',
+      /**
+       * Kill switch for the MCP server and its token management.
+       *
+       * Off hides every MCP surface in the UI; the backend drops the
+       * `/mcp/:mcpTokenId` route and the token CRUD operations with it, so this
+       * is a real gate rather than a cosmetic one.
+       */
+      mcpEnabled: process.env.NC_DISABLE_MCP !== 'true',
       mainSubDomain: this.configService.get('mainSubDomain', { infer: true }),
       dashboardPath: this.configService.get('dashboardPath', { infer: true }),
       inviteOnlySignup: settings.invite_only_signup,

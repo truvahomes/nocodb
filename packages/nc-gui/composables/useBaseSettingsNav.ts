@@ -35,7 +35,7 @@ export function useBaseSettingsNav() {
 
   const { isUIAllowed, environmentRestrictionReason, baseRoles } = useRoles()
 
-  const { isMobileMode } = useGlobal()
+  const { isMobileMode, appInfo } = useGlobal()
 
   const { isFeatureEnabled } = useBetaFeatureToggle()
 
@@ -135,7 +135,9 @@ export function useBaseSettingsNav() {
 
   const canSeeApiTokens = computed(() => !isEEFeatureBlocked.value && isUIAllowed('manageBaseApiTokens') && !isMobileMode.value)
 
-  const canSeeMcp = computed(() => isUIAllowed('manageMCP') && !!base.value?.id && !isMobileMode.value)
+  const canSeeMcp = computed(
+    () => appInfo.value.mcpEnabled && isUIAllowed('manageMCP') && !!base.value?.id && !isMobileMode.value,
+  )
 
   const canSeeAutomations = computed(
     () =>

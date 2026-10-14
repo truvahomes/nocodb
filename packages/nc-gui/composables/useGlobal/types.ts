@@ -54,6 +54,8 @@ export interface AppInfo {
   samlProviderName: string | null
   giftUrl: string
   feedEnabled: boolean
+  /** False when NC_DISABLE_MCP=true: the MCP server route and token CRUD are unregistered. */
+  mcpEnabled: boolean
   sentryDSN: string
   isOnPrem: boolean
   licenseServerUrl?: string
