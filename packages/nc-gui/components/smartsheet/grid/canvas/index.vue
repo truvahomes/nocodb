@@ -2678,9 +2678,11 @@ const reloadViewDataHookHandler = withLoading(async (params) => {
       return
     }
 
-    await syncGroupCount()
+    // Clear first: syncing the root count loads the first group chunk, which a
+    // clear afterwards would throw away and fetch again.
     groupDataCache.value.clear()
     clearGroupCache(Number.NEGATIVE_INFINITY, Number.POSITIVE_INFINITY)
+    await syncGroupCount()
     setTimeout(() => {
       // if scrolltop is beyond totaheight, reset it to maximum possible value
       scroller.value?.scrollTo({ top: Math.max(0, Math.min(totalHeight.value, scrollTop.value)) })

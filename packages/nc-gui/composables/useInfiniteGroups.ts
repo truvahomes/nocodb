@@ -184,7 +184,6 @@ export const useInfiniteGroups = (
                 where: effectiveWhere,
                 sort: `${getSortParams(groupCol.sort)}${groupCol.column.title}`,
                 column_name: groupCol.column.title!,
-                subGroupColumnName: groupByColumns.value[level + 1]?.column.title,
                 sortsArr: sorts.value,
                 filtersArr: nestedFilters.value ?? [],
                 // group-nesting predicate — must ride apart from `filtersArr`
@@ -201,7 +200,6 @@ export const useInfiniteGroups = (
                   where: effectiveWhere,
                   sort: `${getSortParams(groupCol.sort)}${groupCol.column.title}` as any,
                   column_name: groupCol.column.title,
-                  subGroupColumnName: groupByColumns.value[level + 1]?.column.title,
                   sortArrJson: JSON.stringify(sorts.value),
                   filterArrJson: JSON.stringify([...(nestedFilters.value ?? []), ...nestedGrpWhereArr]),
                 },
@@ -219,7 +217,6 @@ export const useInfiniteGroups = (
                 column_name: groupCol.column.title,
                 sortArrJson: JSON.stringify(sorts.value),
                 filterArrJson: JSON.stringify([...(nestedFilters.value || []), ...nestedGrpWhereArr]),
-                subGroupColumnName: groupByColumns.value[level + 1]?.column.title,
               })
           break
         } catch (err) {
@@ -315,7 +312,10 @@ export const useInfiniteGroups = (
           groups: new Map(),
           chunkStates: [],
           count: +item.count,
-          groupCount: +item.__sub_group_count__,
+          // Sub-group count is not requested here (it costs a COUNT(DISTINCT) over the
+          // whole table); it is set from the child fetch's `pageInfo.totalRows` once the
+          // group is expanded — see loadSubGroups.
+          groupCount: 0,
           isExpanded: false,
           color: findKeyColor(value, groupCol.column, getNextColor),
           expandedGroups: 0,
@@ -377,8 +377,11 @@ export const useInfiniteGroups = (
       // visible in the viewport (see fetchMissingGroupAggregations), so scrolling
       // through group headers doesn't fan out expensive per-group aggregate queries.
 
-      // The response total is authoritative: 0 is a real answer (every group gone), and a
-      // parent's `__sub_group_count__` counts the blank sub-group that hide-empty drops.
+      // Groups restored as expanded (route / saved state) need their sub-groups now,
+      // since nothing else triggers the first child fetch while `groupCount` is still 0.
+      groups.forEach(loadSubGroups)
+
+      // The response total is authoritative: 0 is a real answer (every group gone).
       if (!parentGroup) {
         totalGroups.value = response.pageInfo?.totalRows ?? totalGroups.value
         chunkStates.value[chunkId] = 'loaded'
@@ -394,6 +397,13 @@ export const useInfiniteGroups = (
     } finally {
       settleInFlight()
     }
+  }
+
+  // Kicks off the first child chunk of an expanded non-leaf group. Its response total
+  // becomes `groupCount`, which the canvas needs before it will ask for any sub-group.
+  function loadSubGroups(group: CanvasGroup) {
+    if (!group.isExpanded || group.path || group.chunkStates[0]) return
+    fetchGroupChunk(0, group)
   }
 
   function markChunkInFlight(chunkKey: string) {
@@ -598,40 +608,20 @@ export const useInfiniteGroups = (
 
     try {
       if (!group) {
-        const groupCol = groupByColumns.value?.[0]
-        if (!groupCol) return
+        if (!groupByColumns.value?.[0]) return
 
-        const effectiveWhere = appendHideEmptyWhere(where?.value)
+        // The first chunk's `pageInfo.totalRows` is the exact group count, so load it
+        // instead of paying for a separate count query (a full scan) on top of it.
+        const inFlight = inFlightGroupChunks.get(getChunkKey(0))
+        if (inFlight) {
+          await inFlight
+        } else {
+          await fetchGroupChunk(0, undefined, true)
+        }
 
-        totalGroups.value = interfaceDataApi
-          ? // no dedicated count op — the group-by op's `pageInfo.totalRows` is
-            // the exact `groupByCount` result, so a limit-1 fetch doubles as one
-            (
-              await interfaceDataApi.fetchGroupBy({
-                limit: 1,
-                where: effectiveWhere,
-                column_name: groupCol.column.title!,
-                filtersArr: nestedFilters.value ?? [],
-              })
-            ).pageInfo.totalRows ?? 0
-          : isPublic.value
-          ? await $api.public.dataGroupByCount(
-              sharedView.value!.uuid!,
-              {
-                where: effectiveWhere,
-                column_name: groupCol.column.title,
-                filterArrJson: JSON.stringify(nestedFilters.value),
-              },
-              {
-                headers: {
-                  'xc-password': sharedViewPassword.value,
-                },
-              },
-            )
-          : await $api.dbViewRow.groupByCount('noco', base.value.id!, view.value.fk_model_id, view.value.id!, {
-              where: effectiveWhere,
-              column_name: groupCol.column.title,
-            })
+        if (throwError && chunkStates.value[0] !== 'loaded') {
+          throw new Error('Failed to load groups')
+        }
       } else {
         const groupCol = groupByColumns.value?.[group.nestedIn.length]
 
@@ -864,6 +854,7 @@ export const useInfiniteGroups = (
 
   const toggleExpand = async (group: CanvasGroup) => {
     group.isExpanded = !group.isExpanded
+    loadSubGroups(group)
     const nestedKey = group.nestedIn.map((n) => `${n.key}-${n.column_name}`).join('_') || 'default'
 
     if (!view.value?.id) return
@@ -895,6 +886,7 @@ export const useInfiniteGroups = (
     targetGroups.forEach((group) => {
       const nestedKey = group.nestedIn.map((n) => `${n.key}-${n.column_name}`).join('_') || 'default'
       group.isExpanded = expand
+      loadSubGroups(group)
       groupKeysManager.toggleKey(base.value?.id, view.value.id!, nestedKey, expand)
     })
 
