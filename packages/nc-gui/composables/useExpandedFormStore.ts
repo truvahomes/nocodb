@@ -125,7 +125,7 @@ const [useProvideExpandedFormStore, useExpandedFormStore] = useInjectionState(
     const getIsAllowedEditField = (fieldId: string) => {
       if (!isEeUI) return true
 
-      return fieldId && isAllowed(PermissionEntity.FIELD, fieldId, PermissionKey.RECORD_FIELD_EDIT)
+      return fieldId && isAllowed(PermissionEntity.FIELD, fieldId, PermissionKey.RECORD_FIELD_EDIT, { isNewRow: rowStore.isNew.value })
     }
 
     // getters

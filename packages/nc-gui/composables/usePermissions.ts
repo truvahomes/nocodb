@@ -81,11 +81,18 @@ export const usePermissions = () => {
    * UI greys the control out instead of letting the user click through to a
    * backend rejection.
    */
-  const isAllowed = (entity?: PermissionEntity, entityId?: string, permission?: PermissionKey, ..._rest: any[]) => {
+  const isAllowed = (entity?: PermissionEntity, entityId?: string, permission?: PermissionKey, ...rest: any[]) => {
     if (!entity || !entityId || !permission) return true
 
-    const action = PERMISSION_KEY_TO_DISABLED_ACTION[permission]
+    let action = PERMISSION_KEY_TO_DISABLED_ACTION[permission]
     if (!action) return true
+
+    // Writing a field on a row that is not saved yet is a create, not an
+    // update: only `INSERT` should be able to block it. Callers that know the
+    // row is new pass `{ isNewRow: true }`; a form view only ever creates.
+    if (permission === PermissionKey.RECORD_FIELD_EDIT && (rest[0]?.isNewRow || rest[0]?.isFormView)) {
+      action = DisabledActionsType.INSERT
+    }
 
     if (entity === PermissionEntity.TABLE) {
       return !isActionDisabled(metasWithIdAsKey.value?.[entityId]?.disabled_actions, action)

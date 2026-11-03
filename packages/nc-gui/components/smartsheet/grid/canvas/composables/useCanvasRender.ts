@@ -33,7 +33,7 @@ import {
   GROUP_PADDING,
   MAX_SELECTED_ROWS,
 } from '../utils/constants'
-import { parseCellWidth } from '../utils/cell'
+import { getColumnForRow, parseCellWidth } from '../utils/cell'
 import { getColumnDropTargetIndex } from '../utils/headerUtils'
 import {
   calculateGroupHeight,
@@ -2060,7 +2060,7 @@ export function useCanvasRender({
 
         if (isActive) {
           activeState = {
-            col: column,
+            col: getColumnForRow(column, row),
             x: xOffset - _scrollLeft,
             y: yOffset,
             width,
@@ -2087,7 +2087,7 @@ export function useCanvasRender({
           selected: isActive,
           pv: column.pv,
           spriteLoader,
-          readonly: column.readonly,
+          readonly: getColumnForRow(column, row).readonly,
           imageLoader,
           markdownLoader,
           tableMetaLoader,
@@ -2183,7 +2183,7 @@ export function useCanvasRender({
 
             if (isActive) {
               activeState = {
-                col: column,
+                col: getColumnForRow(column, row),
                 x: xOffset,
                 y: yOffset,
                 width,
@@ -2207,7 +2207,7 @@ export function useCanvasRender({
               rowMeta: row.rowMeta,
               selected: isActive,
               pv: column.pv,
-              readonly: column.readonly,
+              readonly: getColumnForRow(column, row).readonly,
               spriteLoader,
               imageLoader,
               markdownLoader,
@@ -2303,7 +2303,8 @@ export function useCanvasRender({
 
         if (isActive) {
           activeState = {
-            col: column,
+            // The placeholder row becomes a new record on click.
+            col: getColumnForRow(column, { rowMeta: { new: true } }),
             x: xOffset - scrollLeft.value,
             y: yOffset,
             width,
@@ -2345,7 +2346,7 @@ export function useCanvasRender({
 
             if (isActive) {
               activeState = {
-                col: column,
+                col: getColumnForRow(column, { rowMeta: { new: true } }),
                 x: xOffset,
                 y: yOffset,
                 width,

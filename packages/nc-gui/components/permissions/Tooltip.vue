@@ -16,13 +16,15 @@ interface Props {
   showPointerEventNone?: boolean
   disabled?: boolean
   arrow?: boolean
+  // The record is still being created: only `INSERT` may block it, not `UPDATE`.
+  isNewRow?: boolean
 }
 
 const props = defineProps<Props>()
 
 const { isAllowed: isActionAllowed } = usePermissions()
 
-const isAllowed = computed(() => isActionAllowed(props.entity, props.entityId, props.permission))
+const isAllowed = computed(() => isActionAllowed(props.entity, props.entityId, props.permission, { isNewRow: props.isNewRow }))
 
 /**
  * Why the control is unavailable. The slot consumer disables the control

@@ -7,6 +7,7 @@ import type { XKnex } from '~/db/CustomKnex';
 import type {
   AuditV1OperationTypes,
   BulkAuditV1OperationTypes,
+  DisabledActionsType,
   FilterType,
   NcApiVersion,
   NcContext,
@@ -354,6 +355,7 @@ export interface IBaseModelSqlV2 {
     permission: PermissionKey;
     user: any;
     req: any;
+    disabledAction?: DisabledActionsType;
   }): Promise<void>;
 
   chunkList(args: {

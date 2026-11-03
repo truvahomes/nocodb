@@ -22,6 +22,7 @@ const props = defineProps<{
   hideIconTooltip?: boolean
   isHiddenCol?: boolean
   showLockIcon?: boolean
+  isNewRow?: boolean
   showMenuMobile?: boolean
 }>()
 
@@ -54,7 +55,7 @@ const { isAllowed } = usePermissions()
 const isAllowedToEditField = computed(() => {
   if (!props.showLockIcon || !column.value?.id) return true
 
-  return isAllowed(PermissionEntity.FIELD, column.value.id, PermissionKey.RECORD_FIELD_EDIT)
+  return isAllowed(PermissionEntity.FIELD, column.value.id, PermissionKey.RECORD_FIELD_EDIT, { isNewRow: props.isNewRow })
 })
 
 const { getMetaByKey } = useMetas()
@@ -294,6 +295,7 @@ const onClick = (e: Event) => {
         :entity="PermissionEntity.FIELD"
         :entity-id="column.id"
         :permission="PermissionKey.RECORD_FIELD_EDIT"
+        :is-new-row="isNewRow"
         :show-pointer-event-none="false"
         hide-on-click
         class="!ml-1 flex children:flex"

@@ -203,6 +203,7 @@ function onCellValueChange(colTitle: string | undefined) {
           class="nc-expanded-cell-header h-full flex-none"
           :is-hidden-col="isHiddenCol"
           show-lock-icon
+          :is-new-row="isNew"
           show-menu-mobile
         />
         <LazySmartsheetHeaderCell
@@ -211,6 +212,7 @@ function onCellValueChange(colTitle: string | undefined) {
           class="nc-expanded-cell-header flex-none"
           :is-hidden-col="isHiddenCol"
           show-lock-icon
+          :is-new-row="isNew"
           show-menu-mobile
         />
         <SmartsheetExpandedFormFieldPresence v-if="isEeUI" :column-id="col.id" />
@@ -251,6 +253,7 @@ function onCellValueChange(colTitle: string | undefined) {
           :entity="PermissionEntity.FIELD"
           :entity-id="col.id"
           :permission="PermissionKey.RECORD_FIELD_EDIT"
+          :is-new-row="isNew"
           :placement="isMobileMode ? 'top' : 'right'"
           :show-pointer-event-none="false"
           hide-on-click

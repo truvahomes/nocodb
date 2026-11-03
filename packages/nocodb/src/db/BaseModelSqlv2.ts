@@ -10697,8 +10697,15 @@ class BaseModelSqlv2 implements IBaseModelSqlV2 {
     permission: PermissionKey;
     user: any;
     req: any;
+    /**
+     * Which `disabled_actions` entry guards a field write. Defaults to UPDATE;
+     * writes that create a record pass INSERT so an UPDATE-only lock does not
+     * block them.
+     */
+    disabledAction?: DisabledActionsType;
   }) {
     const { entity, entityId, permission, user } = params;
+    const disabledAction = params.disabledAction ?? DisabledActionsType.UPDATE;
 
     // A disabled action binds everyone, so this runs before the `!user` bail
     // below. Every field-level write (cell edit, link add/remove/reorder)
@@ -10715,10 +10722,10 @@ class BaseModelSqlv2 implements IBaseModelSqlV2 {
 
         if (
           column &&
-          isActionDisabled(column.disabled_actions, DisabledActionsType.UPDATE)
+          isActionDisabled(column.disabled_actions, disabledAction)
         ) {
           NcError.get(this.context).disabledAction(
-            DisabledActionsType.UPDATE,
+            disabledAction,
             'field',
             column.title,
           );

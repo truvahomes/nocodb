@@ -1,4 +1,5 @@
 import {
+  DisabledActionsType,
   isLinkV2,
   type NcRequest,
   PermissionEntity,
@@ -118,6 +119,8 @@ export class NestedLinkPreparator {
         permission: PermissionKey.RECORD_FIELD_EDIT,
         user: req?.user,
         req,
+        // Nested links are only written while a record is being inserted.
+        disabledAction: DisabledActionsType.INSERT,
       });
     }
 

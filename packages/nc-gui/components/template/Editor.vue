@@ -105,8 +105,9 @@ const columns = computed(() =>
   (meta.value?.columns || [])
     ?.filter((col) => filterForDestinationColumn(col))
     .map((col) => {
-      // If it is import data only, then we need to check if the field is editable
-      const isEditAllowed = importDataOnly ? isAllowed(PermissionEntity.FIELD, col.id!, PermissionKey.RECORD_FIELD_EDIT) : true
+      // If it is import data only, then we need to check if the field is editable.
+      // Import only creates records, so only an INSERT lock applies.
+      const isEditAllowed = importDataOnly ? isAllowed(PermissionEntity.FIELD, col.id!, PermissionKey.RECORD_FIELD_EDIT, { isNewRow: true }) : true
 
       // We allow to link record throw foreign key, so we don't need to check if the field is readonly
       const isReadonlyCol = col.readonly && col.uidt !== UITypes.ForeignKey

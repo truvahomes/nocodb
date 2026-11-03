@@ -228,3 +228,22 @@ export const getRelatedBaseId = (relationColumn: ColumnType | undefined, current
   // For same-base links, fk_related_base_id will be undefined, so use current base ID
   return colOptions?.fk_related_base_id || currentBaseId
 }
+
+/**
+ * The column as it applies to one specific row.
+ *
+ * A field with only `UPDATE` disabled is locked for existing rows but still
+ * writable while a record is being created, so for an unsaved (new) row the
+ * `INSERT`-based flags precomputed on the column replace the `UPDATE`-based
+ * ones. Returns the very same object when nothing differs (the common case), so
+ * this is safe to call per cell per frame.
+ */
+export const getColumnForRow = <T extends { isCellEditable?: boolean; readonly?: boolean }>(
+  column: T & { isCellEditableOnNewRow?: boolean; readonlyOnNewRow?: boolean },
+  row?: { rowMeta?: { new?: boolean } } | null,
+): T => {
+  if (!row?.rowMeta?.new || column.isCellEditableOnNewRow === undefined) return column
+  if (column.isCellEditableOnNewRow === column.isCellEditable && column.readonlyOnNewRow === column.readonly) return column
+
+  return { ...column, isCellEditable: column.isCellEditableOnNewRow, readonly: column.readonlyOnNewRow }
+}
