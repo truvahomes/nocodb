@@ -591,9 +591,9 @@ export function useViewFilters(
             }),
           )
 
-          // EE only: Sync updated filter properties to the smartsheet store's allFilters
-          // so PinnedFilters and other consumers see changes immediately
-          if (isEeUI && !isLink && !isWebhook && !isWidget && !isRlsPolicy && !buttonColId?.value) {
+          // Sync updated filter properties to the smartsheet store's allFilters so PinnedFilters,
+          // client-side row validation (the "Row filtered" badge) and other consumers see changes immediately
+          if (!isLink && !isWebhook && !isWidget && !isRlsPolicy && !buttonColId?.value) {
             const storeFilter = allFilters.value.find((f) => f.id === filter.id)
             if (storeFilter) {
               Object.assign(storeFilter, {
@@ -763,9 +763,9 @@ export function useViewFilters(
           workflow: !!isWorkflow,
         })
 
-        // EE only: Sync updated filter to the smartsheet store's allFilters
-        // so PinnedFilters and other consumers see changes immediately
-        if (isEeUI && !isLink && !isWebhook && !isWidget && !isRlsPolicy && !buttonColId?.value) {
+        // Sync updated filter to the smartsheet store's allFilters so PinnedFilters,
+        // client-side row validation (the "Row filtered" badge) and other consumers see changes immediately
+        if (!isLink && !isWebhook && !isWidget && !isRlsPolicy && !buttonColId?.value) {
           const storeFilter = allFilters.value.find((f) => f.id === filter.id)
           if (storeFilter) {
             Object.assign(storeFilter, {
