@@ -28,6 +28,12 @@ html {
   overflow: hidden;
 }
 
+/* Horizontal scroll must only scroll — never trigger the browser's back/forward swipe navigation */
+html,
+body {
+  overscroll-behavior-x: none;
+}
+
 body {
   line-height: 1.3125rem;
 
