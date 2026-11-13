@@ -63,6 +63,24 @@ export class ColumnsController {
     });
   }
 
+  @Patch([
+    '/api/v1/db/meta/columns/:columnId/generate-floors',
+    '/api/v2/meta/columns/:columnId/generate-floors',
+  ])
+  @Acl('columnUpdate')
+  async columnFloorSetRegenerate(
+    @TenantContext() context: NcContext,
+    @Param('columnId') columnId: string,
+    @Req() req: NcRequest,
+  ) {
+    return await this.columnsService.columnFloorSetGenerate(context, {
+      columnId: columnId,
+      req,
+      user: req.user,
+    });
+  }
+
+
   @Delete([
     '/api/v1/db/meta/columns/:columnId',
     '/api/v2/meta/columns/:columnId',

@@ -4,5 +4,5 @@ export * from './apiHelpers';
 export * from './cacheHelpers';
 export * from './extractLimitAndOffset';
 export * from './isDisposableEmail';
-
+export * from './floorHelpers';
 export { populateMeta };
