@@ -16,6 +16,49 @@ import { GenericFieldHandler } from '~/db/field-handler/handlers/generic';
 import { getAliasedSoftDeleteFilter } from '~/helpers/dbHelpers';
 import { getRefTableColumnForFilter } from '~/db/generateLookupSelectQuery';
 
+/**
+ * Upper bound on how many ids a link filter's subquery may resolve to before
+ * we stop inlining them and fall back to `IN (subquery)`. 0 disables inlining.
+ */
+const LTAR_FILTER_INLINE_ID_LIMIT = (() => {
+  const v = parseInt(process.env.NC_LTAR_FILTER_INLINE_ID_LIMIT ?? '', 10);
+  return Number.isFinite(v) && v >= 0 ? v : 1000;
+})();
+
+/**
+ * A link filter becomes `fk IN (SELECT id FROM related WHERE <cond>)`. Several
+ * of those OR-ed together (e.g. "development OR complex OR project name like X")
+ * can't use the fk indexes in MySQL: index_merge needs constant ranges and the
+ * IN-subquery -> semi-join rewrite only applies to top-level AND conditions, so
+ * the optimizer scans the whole table and evaluates the subqueries per row.
+ *
+ * The related-side subquery is usually tiny, so we run it once up front and
+ * inline the ids as a literal list (`fk IN ('a','b')`), which lets MySQL
+ * index-merge the fk indexes. Same result set. Falls back to the subquery when
+ * the filter needs a root CTE, the list is too large, or the prefetch fails.
+ */
+async function resolveIdsIfSmall(
+  selectQb: Knex.QueryBuilder,
+  needsRootApply: boolean,
+): Promise<any[] | null> {
+  if (!LTAR_FILTER_INLINE_ID_LIMIT || needsRootApply) return null;
+  try {
+    const rows: Record<string, unknown>[] = await selectQb
+      .clone()
+      .limit(LTAR_FILTER_INLINE_ID_LIMIT + 1);
+    if (rows.length > LTAR_FILTER_INLINE_ID_LIMIT) return null;
+    const ids = new Set<any>();
+    for (const row of rows) {
+      const id = Object.values(row)[0];
+      // `x IN (subquery)` never matches on NULL, so dropping them is equivalent
+      if (id !== null && id !== undefined) ids.add(id);
+    }
+    return [...ids];
+  } catch {
+    return null;
+  }
+}
+
 export class LtarGeneralHandler extends GenericFieldHandler {
   /**
    * Sort by the linked record's display value — delegates to
@@ -157,11 +200,17 @@ export class LtarGeneralHandler extends GenericFieldHandler {
         parseOperationResult.rootApply?.(qb);
       };
 
+      const hmIds =
+        filter.comparison_op in negatedMapping
+          ? null
+          : await resolveIdsIfSmall(selectQb, !!parseOperationResult.rootApply);
+
       return {
         rootApply,
         clause: (qbP: Knex.QueryBuilder) => {
           if (filter.comparison_op in negatedMapping)
             qbP.whereNotIn(parentColumnRef, selectQb);
+          else if (hmIds) qbP.whereIn(parentColumnRef, hmIds);
           else qbP.whereIn(parentColumnRef, selectQb);
         },
       };
@@ -257,6 +306,11 @@ export class LtarGeneralHandler extends GenericFieldHandler {
         parseOperationResult.rootApply?.(qb);
       };
 
+      const btIds =
+        filter.comparison_op in negatedMapping
+          ? null
+          : await resolveIdsIfSmall(selectQb, !!parseOperationResult.rootApply);
+
       return {
         rootApply,
         clause: (qbP: Knex.QueryBuilder) => {
@@ -266,7 +320,8 @@ export class LtarGeneralHandler extends GenericFieldHandler {
                 .whereNotIn(childColumnRef, selectQb)
                 .orWhereNull(childColumnRef),
             );
-          } else qbP.whereIn(childColumnRef, selectQb);
+          } else if (btIds) qbP.whereIn(childColumnRef, btIds);
+          else qbP.whereIn(childColumnRef, selectQb);
         },
       };
     } else if (relationType === RelationTypes.MANY_TO_MANY) {
@@ -415,6 +470,11 @@ export class LtarGeneralHandler extends GenericFieldHandler {
         parseOperationResult.rootApply?.(qb);
       };
 
+      const mmIds =
+        filter.comparison_op in negatedMapping
+          ? null
+          : await resolveIdsIfSmall(selectQb, !!parseOperationResult.rootApply);
+
       return {
         rootApply,
         clause: (qbP: Knex.QueryBuilder) => {
@@ -424,6 +484,7 @@ export class LtarGeneralHandler extends GenericFieldHandler {
                 .whereNotIn(childColumnRef, selectQb)
                 .orWhereNull(childColumnRef),
             );
+          else if (mmIds) qbP.whereIn(childColumnRef, mmIds);
           else qbP.whereIn(childColumnRef, selectQb);
         },
       };
